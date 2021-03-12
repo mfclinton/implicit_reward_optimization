@@ -128,4 +128,5 @@ class INTRINSIC_GAMMA:
 
     def get_gamma(self, state):
         gamma = self.model(Variable(state).cuda())
+        # gamma[:] = .95 # TODO: REMOVE THISSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSs
         return gamma

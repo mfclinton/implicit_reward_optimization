@@ -82,16 +82,20 @@ def Run_Gridworld_Implicit(T1, T2):
         a = (cumu_log_prob * discounted_in_rewards).sum()
 
         reward_loss = -c * (a / h)
-        gamma_loss = -c * (b / h) - in_gammas
+        # gamma_loss = -c * (b / h) - in_gammas
         
         in_reward.optimizer.zero_grad()
         reward_loss.backward()
         in_reward.optimizer.step()
 
-        in_gamma.optimizer.zero_grad()
-        gamma_loss.backward()
-        in_gamma.optimizer.step()
+        print("Reward Total : " + str(real_rewards.sum()))
+
+
+        # in_gamma.optimizer.zero_grad()
+        # gamma_loss.backward()
+        # in_gamma.optimizer.step()
 
 
 if __name__ == "__main__":
+    # torch.autograd.set_detect_anomaly(True)
     Run_Gridworld_Implicit(10, 10)
