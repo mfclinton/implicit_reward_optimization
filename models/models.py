@@ -22,13 +22,14 @@ class Policy(nn.Module):
 
         self.linear1 = nn.Linear(num_inputs, hidden_size).double()
         self.linear2 = nn.Linear(hidden_size, num_outputs).double()
+        self.sm = nn.Softmax(dim=0)
 
     def forward(self, inputs):
         x = inputs
         # print(self.linear1.weight.dtype)
         x = F.relu(self.linear1(x))
         action_scores = self.linear2(x)
-        return F.softmax(action_scores)
+        return self.sm(action_scores)
 
 class REINFORCE:
     def __init__(self, hidden_size, num_inputs, action_space):
@@ -74,7 +75,7 @@ class REINFORCE:
 # 
 class Reward(nn.Module):
     def __init__(self, hidden_size, num_inputs):
-        super(Policy, self).__init__()
+        super(Reward, self).__init__()
 
         self.linear1 = nn.Linear(num_inputs, hidden_size).double()
         self.linear2 = nn.Linear(hidden_size, 1).double()
@@ -84,7 +85,7 @@ class Reward(nn.Module):
         # print(self.linear1.weight.dtype)
         x = F.relu(self.linear1(x))
         x = self.linear2(x)
-        r = F.sigmoid(x)
+        r = torch.sigmoid(x)
         return r
 
 class INTRINSIC_REWARD:
@@ -103,7 +104,7 @@ class INTRINSIC_REWARD:
 # 
 class Gamma(nn.Module):
     def __init__(self, hidden_size, num_inputs):
-        super(Policy, self).__init__()
+        super(Gamma, self).__init__()
 
         self.linear1 = nn.Linear(num_inputs, hidden_size).double()
         self.linear2 = nn.Linear(hidden_size, 1).double()
@@ -113,7 +114,7 @@ class Gamma(nn.Module):
         # print(self.linear1.weight.dtype)
         x = F.relu(self.linear1(x))
         x = self.linear2(x)
-        gamma = F.sigmoid(x)
+        gamma = torch.sigmoid(x)
         return gamma
 
 class INTRINSIC_GAMMA:
@@ -123,6 +124,6 @@ class INTRINSIC_GAMMA:
         self.optimizer = optim.Adam(self.model.parameters(), lr=1e-3)
         self.model.train()
 
-    def get_reward(self, state):
+    def get_gamma(self, state):
         gamma = self.model(Variable(state).cuda())
         return gamma
