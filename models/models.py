@@ -10,6 +10,7 @@ from torch.autograd import Variable
 import pdb
 import torch.nn.utils as utils
 from torch.distributions import Categorical
+from utils.helper import *
 
 # 
 # POLICY MODELS
@@ -47,17 +48,18 @@ class REINFORCE:
         return action.item(), m.log_prob(action)
 
     def update_parameters(self, rewards, log_probs, gamma):
-        eps = 1e-5
-        R = 0
+        # R = 0
         policy_loss = 0
-        returns = []
-        for i in reversed(range(len(rewards))):
-            r = rewards[i]
-            R = r + gamma * R
-            returns.insert(0, R)
+        # returns = []
+        # for i in reversed(range(len(rewards))):
+        #     r = rewards[i]
+        #     R = r + gamma * R
+        #     returns.insert(0, R)
 
-        returns = torch.tensor(returns)
-        returns = (returns - returns.mean()) / (returns.std() + eps)
+        # returns = torch.tensor(returns)
+        # returns = (returns - returns.mean()) / (returns.std() + eps)
+
+        returns = get_returns_t(rewards, gamma, normalize=True)
 
         self.optimizer.zero_grad()
         for log_prob, R in zip(log_probs, returns):
