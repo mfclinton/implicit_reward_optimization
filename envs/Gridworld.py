@@ -6,9 +6,13 @@ import logging
 import torch
 import numpy as np
 import math
+import matplotlib.pyplot  as plt
+from matplotlib.patches import Rectangle, Circle, Arrow
+from matplotlib.ticker import NullLocator
+import seaborn as sns
 
 class GridWorld(gym.Env):
-    def __init__(self, grid_dims = (5, 5), start_state = 0, end_states = [24], obstacle_states = [12, 17], water_states = [22]):
+    def __init__(self, grid_dims = (5, 5), start_state = 0, end_states = [24], obstacle_states = [12, 17], water_states = [22], do_heatmap=True):
         # customizable parameters
         self._grid_dims = grid_dims
         self._start_state = start_state
@@ -24,8 +28,16 @@ class GridWorld(gym.Env):
         self._rotateLeft = {0: 2, 1: 3, 2: 1, 3: 0}
         self._rotateRight = {0: 3, 1: 2, 2: 0, 3: 1}
 
+        # Debug
+        self.do_heatmap = do_heatmap
+
         # set environment state
         self.reset()
+
+        if(do_heatmap):
+            self.ax = sns.heatmap(self.heatmap, linewidth=0.5)
+            plt.show()
+            print("LOL")
 
     def step(self, action: int):
         next_state = self._calc_next_state(self._state['observation'].numpy()[0], action)
@@ -41,6 +53,9 @@ class GridWorld(gym.Env):
             'done': self._done
         }
         self._state = state_obj
+
+        if(self.update_heatmap):
+            self.update_heatmap(state_obj)
 
         return state_obj
 
@@ -100,6 +115,9 @@ class GridWorld(gym.Env):
         self._timestep = 0
         self._done = False
 
+        if(self.do_heatmap):
+            self.heatmap = np.zeros(self._grid_dims)
+
     @property
     def state(self):
         return self._state
@@ -115,3 +133,23 @@ class GridWorld(gym.Env):
     @property
     def action_space(self):
         return Discrete(4)
+
+    def get_x_y(self, state):
+        width = self._grid_dims[0]
+        cur_position = state["observation"]
+        x = cur_position % width
+        y = cur_position // width
+        return x, y
+
+    def update_heatmap(self, state):
+        x, y = self.get_x_y(state)
+        self.heatmap[x,y] += 1
+
+
+    def render_heatmap(self):
+        ax = sns.heatmap(self.heatmap, linewidth=0.5)
+        plt.show()
+
+    def render(self):
+        if(self.do_heatmap):
+            self.render_heatmap()

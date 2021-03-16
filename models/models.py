@@ -28,7 +28,7 @@ class Policy(nn.Module):
     def forward(self, inputs):
         x = inputs
         # print(self.linear1.weight.dtype)
-        x = F.relu(self.linear1(x))
+        x = F.leaky_relu(self.linear1(x), 0.1)
         action_scores = self.linear2(x)
         return self.sm(action_scores)
 
@@ -60,6 +60,7 @@ class REINFORCE:
         # returns = (returns - returns.mean()) / (returns.std() + eps)
 
         returns = get_returns_t(rewards, gamma, normalize=True)
+        # print(returns)
 
         self.optimizer.zero_grad()
         for log_prob, R in zip(log_probs, returns):
@@ -85,7 +86,7 @@ class Reward(nn.Module):
     def forward(self, inputs):
         x = inputs
         # print(self.linear1.weight.dtype)
-        x = F.relu(self.linear1(x))
+        x = F.leaky_relu(self.linear1(x),0.1)
         x = self.linear2(x)
         r = torch.sigmoid(x)
         return r
@@ -94,7 +95,7 @@ class INTRINSIC_REWARD:
     def __init__(self, hidden_size, num_inputs):
         self.model = Reward(hidden_size, num_inputs)
         self.model = self.model.cuda()
-        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-3)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-2)
         self.model.train()
 
     def get_reward(self, state_action):
@@ -114,7 +115,7 @@ class Gamma(nn.Module):
     def forward(self, inputs):
         x = inputs
         # print(self.linear1.weight.dtype)
-        x = F.relu(self.linear1(x))
+        x = F.leaky_relu(self.linear1(x), 0.1)
         x = self.linear2(x)
         gamma = torch.sigmoid(x)
         return gamma
