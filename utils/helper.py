@@ -1,5 +1,6 @@
 import torch
 import torch.nn.functional as F
+import numpy as np
 
 def onehot_state(state, num_states):
     encoded = torch.zeros(num_states, dtype=torch.double)
@@ -40,3 +41,24 @@ def get_cumulative_sum_front(x):
 
     cumu_sums = torch.tensor(cumu_sums).cuda()
     return cumu_sums
+
+def get_average_state_reward(env, in_reward):
+    reward_map = torch.zeros(env.state_space.n).cuda()
+    for s in range(env.state_space.n):
+        repeated_state = np.repeat(np.expand_dims(onehot_state(s, env.state_space.n), axis=0), env.action_space.n, axis=0)
+        repeated_state = torch.tensor(repeated_state).cuda()
+
+        state_action = onehot_states_to_state_action(repeated_state, torch.arange(env.action_space.n).cuda(), env.action_space.n)
+        reward_map[s] += in_reward.get_reward(state_action).mean()
+    return reward_map
+
+def get_full_state_reward(env, in_reward):
+    reward_map = torch.zeros(env.state_space.n, env.action_space.n).cuda()
+    for s in range(env.state_space.n):
+        repeated_state = np.repeat(np.expand_dims(onehot_state(s, env.state_space.n), axis=0), env.action_space.n, axis=0)
+        repeated_state = torch.tensor(repeated_state).cuda()
+
+        state_action = onehot_states_to_state_action(repeated_state, torch.arange(env.action_space.n).cuda(), env.action_space.n)
+
+        reward_map[s,:] = torch.squeeze(in_reward.get_reward(state_action))
+    return reward_map

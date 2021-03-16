@@ -91,19 +91,13 @@ def Run_Gridworld_Implicit(T1, T2):
             print("Reward Total : " + str(real_rewards.sum()))
             print("Fake Reward Total : " + str(discounted_in_rewards.sum()))
             # print(in_reward.model.linear2.weight.view(5,5))
-            reward_map = torch.zeros(25).cuda()
-            for s in range(env.state_space.n):
-                repeated_state = np.repeat(np.expand_dims(onehot_state(s, env.state_space.n), axis=0), env.action_space.n, axis=0)
-                repeated_state = torch.tensor(repeated_state).cuda()
-                # print(repeated_state)
-                # print(repeated_state.shape)
 
-                state_action = onehot_states_to_state_action(repeated_state, torch.arange(env.action_space.n).cuda(), env.action_space.n)
-                # print(state_action.shape)
-                reward_map[s] += in_reward.get_reward(state_action).mean()
 
             print("--- Reward Map---")
-            print(reward_map.view(5,5))
+            # reward_map = get_average_state_reward(env, in_reward)
+            reward_map = get_full_state_reward(env, in_reward)
+            print(reward_map)
+            # print(reward_map.view(5,5))
             print("------")
         else:
             print("skipped")
