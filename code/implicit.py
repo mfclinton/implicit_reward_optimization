@@ -42,7 +42,8 @@ def Get_Trajectory(env, agent, max_steps):
         if steps >= max_steps:
             break
     
-    env.render()
+    # print("here")
+    # env.render()
     return states, actions, rewards, log_probs
 
 
@@ -89,14 +90,14 @@ def Run_Gridworld_Implicit(T1, T2):
 
             print("Reward Total : " + str(real_rewards.sum()))
             print("Fake Reward Total : " + str(discounted_in_rewards.sum()))
-            print(in_reward.model.linear2.weight.view(5,5))
+            # print(in_reward.model.linear2.weight.view(5,5))
             temp = torch.zeros(25)
             for s in range(env.state_space.n):
                 embed_s = onehot_state(s, env.state_space.n)
                 a, _ = agent.select_action(embed_s)
                 temp[s] = a
 
-            print(temp.view(5,5))
+            # print(temp.view(5,5))
         else:
             print("skipped")
 
@@ -104,6 +105,9 @@ def Run_Gridworld_Implicit(T1, T2):
         # in_gamma.optimizer.zero_grad()
         # gamma_loss.backward()
         # in_gamma.optimizer.step()
+        env.render()
+        print("T1 : " + str(t1))
+
 
     
 
