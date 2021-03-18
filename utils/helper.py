@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 import numpy as np
+from torch.autograd import Variable
 
 def onehot_state(state, num_states):
     encoded = torch.zeros(num_states, dtype=torch.double)
@@ -26,8 +27,9 @@ def get_returns_t(rewards, gamma, normalize=False):
         R = r + gamma * R
         returns.insert(0, R)
 
-    returns = torch.tensor(returns).cuda()
-    returns = (returns - returns.mean()) / (returns.std() + eps)
+    returns = Variable(torch.tensor(returns).cuda(), requires_grad=True)
+    if(normalize):
+        returns = (returns - returns.mean()) / (returns.std() + eps)
     return returns
 
 def get_cumulative_sum_front(x):
