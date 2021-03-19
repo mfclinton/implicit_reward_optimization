@@ -15,33 +15,31 @@ from utils.helper import *
 # 
 # POLICY MODELS
 # 
+# INITIALIZATION TO ALL THE SAME CONSTANT COULD CAUSE ISSUES FOR INVERTIBILTY
 class Policy(nn.Module):
-    def __init__(self, hidden_size, num_inputs, action_space):
+    def __init__(self, num_inputs, action_space):
         super(Policy, self).__init__()
         self.action_space = action_space
         num_outputs = action_space.n
 
-        self.linear1 = nn.Linear(num_inputs, hidden_size).double()
-        self.linear2 = nn.Linear(hidden_size, num_outputs).double()
+        self.linear1 = nn.Linear(num_inputs, num_outputs, bias=False).double()
+        self.linear1.weight.data.fill_(0.) 
         self.sm = nn.Softmax(dim=0)
 
     def forward(self, inputs):
         x = inputs
-        # print(self.linear1.weight.dtype)
-        x = F.leaky_relu(self.linear1(x), 0.1)
-        action_scores = self.linear2(x)
+        action_scores = self.linear1(x)
         return self.sm(action_scores)
 
 class REINFORCE:
-    def __init__(self, hidden_size, num_inputs, action_space):
+    def __init__(self, num_inputs, action_space):
         self.action_space = action_space
-        self.model = Policy(hidden_size, num_inputs, action_space)
-        self.model = self.model.cuda()
-        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-3)
+        self.model = Policy(num_inputs, action_space)
+        self.optimizer = optim.SGD(self.model.parameters(), lr=1e-2)
         self.model.train()
 
     def select_action(self, state):
-        probs = self.model(Variable(state).cuda())
+        probs = self.model(state)
         m = Categorical(probs)
         action = m.sample()
 
@@ -77,57 +75,53 @@ class REINFORCE:
 # REWARD MODELS
 # 
 class Reward(nn.Module):
-    def __init__(self, hidden_size, num_inputs):
+    def __init__(self, num_inputs):
         super(Reward, self).__init__()
 
-        self.linear1 = nn.Linear(num_inputs, hidden_size).double()
-        self.linear2 = nn.Linear(hidden_size, 1).double()
+        self.linear1 = nn.Linear(num_inputs, 1, bias=False).double()
+        self.linear1.weight.data.fill_(0.) 
 
     def forward(self, inputs):
         x = inputs
-        # print(self.linear1.weight.dtype)
-        x = F.leaky_relu(self.linear1(x),0.1)
-        x = self.linear2(x)
+        x = self.linear1(x)
         r = torch.sigmoid(x)
         return r
 
 class INTRINSIC_REWARD:
-    def __init__(self, hidden_size, num_inputs):
-        self.model = Reward(hidden_size, num_inputs)
-        self.model = self.model.cuda()
-        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-2)
+    def __init__(self, num_inputs):
+        self.model = Reward(num_inputs)
+        self.optimizer = optim.SGD(self.model.parameters(), lr=1e-2)
         self.model.train()
 
     def get_reward(self, state_action):
-        r = self.model(Variable(state_action).cuda())
+        r = self.model(state_action)
         return r
 
 # 
 # GAMMA MODELS
 # 
 class Gamma(nn.Module):
-    def __init__(self, hidden_size, num_inputs):
+    def __init__(self, num_inputs):
         super(Gamma, self).__init__()
 
-        self.linear1 = nn.Linear(num_inputs, hidden_size).double()
-        self.linear2 = nn.Linear(hidden_size, 1).double()
+        self.linear1 = nn.Linear(num_inputs, 1, bias=False).double()
+        self.linear1.weight.data.fill_(0.) 
+        
 
     def forward(self, inputs):
         x = inputs
-        # print(self.linear1.weight.dtype)
-        x = F.leaky_relu(self.linear1(x), 0.1)
-        x = self.linear2(x)
+        x = self.linear1(x)
         gamma = torch.sigmoid(x)
         return gamma
 
 class INTRINSIC_GAMMA:
-    def __init__(self, hidden_size, num_inputs):
-        self.model = Gamma(hidden_size, num_inputs)
-        self.model = self.model.cuda()
-        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-3)
+    def __init__(self, num_inputs):
+        self.model = Gamma(num_inputs)
+        self.model = self.model
+        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-3, amsgrad=True)
         self.model.train()
 
     def get_gamma(self, state):
-        gamma = self.model(Variable(state).cuda())
+        gamma = self.model(state)
         # gamma[:] = .95 # TODO: REMOVE THISSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSs
         return gamma
