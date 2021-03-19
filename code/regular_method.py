@@ -107,11 +107,23 @@ def Run_Gridworld_Implicit(T1, T2, T3):
             discounted_in_rewards = in_rewards * cumu_gammas
 
             # BOTH (T, num_params(agent))
-            phi, d_phi = get_param_gradient(agent, log_probs, get_sec_grads = True)
+            phi = 0
+            d_phi = 0
+            evaluate_d_phi = False
+
+            if(evaluate_d_phi):
+                phi, d_phi = get_param_gradient(agent, log_probs, get_sec_grads = True)
+            else:
+                phi = get_param_gradient(agent, log_probs, get_sec_grads = False)
+
+
             # (T, num_params(agent))
             cumu_phi = get_cumulative_sum_front(phi)
-            # (T, num_params(agent))
-            cumu_d_phi = get_cumulative_sum_front(d_phi)
+
+            cumu_d_phi = torch.zeros(cumu_phi.size()[0])
+            if(evaluate_d_phi):
+                # (T, num_params(agent))
+                cumu_d_phi = get_cumulative_sum_front(d_phi)
 
             # (T, num_params(in_reward))
             d_in_reward = get_param_gradient(in_reward, in_rewards, get_sec_grads = False)
@@ -141,7 +153,7 @@ def Run_Gridworld_Implicit(T1, T2, T3):
 
         c /= T3
         H /= T3
-        # H += torch.diag(torch.full((H.size()[0],),1e-6))
+        H += torch.diag(torch.full((H.size()[0],),1e-6))
         A /= T3
 
         # TODO: Check
@@ -165,11 +177,6 @@ def Run_Gridworld_Implicit(T1, T2, T3):
         print("Average Steps: ", total_steps / T3)
         
 
-
-
-                
-
-
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(50, 50, 20)
+    Run_Gridworld_Implicit(100, 50, 20)
