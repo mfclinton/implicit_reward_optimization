@@ -8,6 +8,8 @@ from models.models import REINFORCE, INTRINSIC_REWARD, INTRINSIC_GAMMA
 import torch.nn.functional as F
 import torch
 from utils.helper import *
+# Memory Leak
+import gc
 
 # Updates Our Trajectory Information Given A One-Step Data Sample
 def update_and_get_action(env, agent, data, states, actions, rewards, log_probs):
@@ -158,25 +160,33 @@ def Run_Gridworld_Implicit(T1, T2, T3):
 
         # TODO: Check
         d_in_reward_params = - torch.matmul(c, torch.matmul(torch.inverse(H), A))
-        print(c.shape, H.shape, A.shape, d_in_reward_params.shape, in_reward.model.linear1.weight.size())
+        # print(c.shape, H.shape, A.shape, d_in_reward_params.shape, in_reward.model.linear1.weight.size())
 
+        # Hack to maintain memory, check later
+        agent.optimizer.zero_grad()
         in_reward.optimizer.zero_grad()
+        in_gamma.optimizer.zero_grad()
         # TODO: Temporary hack for my NN
-        # print(in_reward.model.linear1.weight)
-        # print(d_in_reward_params)
+
         in_reward.model.linear1.weight.grad = d_in_reward_params.unsqueeze(-1).T.detach()
-        # print(d_in_reward_params, in_reward.model.linear1.weight.grad)
         in_reward.optimizer.step()
-        # print(in_reward.model.linear1.weight)
-        # 1/0
 
         # DEBUGGING
         print("--- Reward Map---")
         reward_map = get_full_state_reward(env, in_reward)
         print(reward_map)
         print("Average Steps: ", total_steps / T3)
-        
+
+        # meme = 0
+        # for obj in gc.get_objects():
+        #     try:
+        #         if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
+        #             # print(type(obj), obj.size())
+        #             meme += 1
+        #     except:
+        #         pass
+        # print("MEME: ", meme)
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(100, 50, 20)
+    Run_Gridworld_Implicit(100, 100, 0)

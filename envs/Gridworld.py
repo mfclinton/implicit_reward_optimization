@@ -47,7 +47,7 @@ class GridWorld(gym.Env):
         self._timestep += 1
 
         state_obj = {
-            'observation': torch.tensor([next_state]),  # pylint: disable=not-callable
+            'observation': torch.tensor([next_state], requires_grad=False),  # pylint: disable=not-callable
             'reward': reward,
             'done': self._done
         }
