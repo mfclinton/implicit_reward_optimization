@@ -59,8 +59,9 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
     # agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
     in_reward = INTRINSIC_REWARD(env.state_space.n * env.action_space.n) #Create Intrinsic Reward Function, (S * A) --> (25) --> (1)
     in_gamma = INTRINSIC_GAMMA(env.state_space.n) #Creates Intrinsic Gamma (S) --> (25) --> (1)
-    max_timesteps = 200 # Max number of steps in an episode
+    max_timesteps = 25 # Max number of steps in an episode
     for t1 in range(T1):
+        # TODO: Can we keep the same agent across iterations?
         agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
         for t2 in range(T2):
             # Get Trajectory returns lists of elements with the following dims
@@ -94,6 +95,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
         total_steps = 0
         total_average_actual_reward = 0
         total_average_intrinsic_reward = 0
+        visited_states = torch.zeros((env.state_space.n))
         for t3 in range(T3):
             #Same as before
             states, actions, real_rewards, log_probs = Get_Trajectory(env, agent, max_timesteps) #Samples a trajectory
@@ -147,6 +149,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
             total_steps += T
             total_average_actual_reward += real_rewards.sum()
             total_average_intrinsic_reward += discounted_in_rewards.sum()
+            visited_states += states_matrix.sum(axis=0)
             for t in range(T):
                 # === Computing H ===
                 phi_s_a = cumu_phi[t].unsqueeze(-1) #(num_params(agent), 1)
@@ -178,7 +181,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
             H += 1e-6
         A /= T3
 
-        # TODO: Check
+        # TODO: Check, Sign of Gradient in Paper Is For Update
         d_in_reward_params = None
         if(not approximate):
             d_in_reward_params = torch.matmul(c, torch.matmul(torch.inverse(H), A))
@@ -202,6 +205,10 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
         print(reward_map)
         print("--- Top Moves ---")
         print(reward_map.argmax(axis=1).view(5,5))
+        print("--- Total Visited States ---")
+        print(visited_states.view(5,5))
+        print("--- Average Visited States ---")
+        print(visited_states.view(5,5) / visited_states.sum())
         print("Average Steps: ", total_steps / T3)
         print("Average Actual Reward: ", total_average_actual_reward / T3)
         print("Average Intrinsic Reward: ", total_average_intrinsic_reward / T3)
@@ -209,4 +216,4 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(200, 50, 50, True)
+    Run_Gridworld_Implicit(100, 200, 200, True)
