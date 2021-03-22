@@ -84,14 +84,15 @@ class Reward(nn.Module):
     def forward(self, inputs):
         x = inputs
         x = self.linear1(x)
-        x = torch.tanh(x)
+        # x = torch.tanh(x)
+        # x = torch.sigmoid(x)
 
         return x
 
 class INTRINSIC_REWARD:
     def __init__(self, num_inputs):
         self.model = Reward(num_inputs)
-        self.optimizer = optim.SGD(self.model.parameters(), lr=1e-2, weight_decay=1e-5)
+        self.optimizer = optim.SGD(self.model.parameters(), lr=1e-2)
         self.model.train()
 
     def get_reward(self, state_action):
