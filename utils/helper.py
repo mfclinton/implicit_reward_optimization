@@ -98,22 +98,22 @@ def get_param_gradient(model, values, get_sec_grads = False):
 #     return cumu_sums
 
 def get_average_state_reward(env, in_reward):
-    reward_map = torch.zeros(env.state_space.n).cuda()
+    reward_map = torch.zeros(env.state_space.n)
     for s in range(env.state_space.n):
         repeated_state = np.repeat(np.expand_dims(onehot_state(s, env.state_space.n), axis=0), env.action_space.n, axis=0)
-        repeated_state = torch.tensor(repeated_state).cuda()
+        repeated_state = torch.tensor(repeated_state)
 
-        state_action = onehot_states_to_state_action(repeated_state, torch.arange(env.action_space.n).cuda(), env.action_space.n)
+        state_action = onehot_states_to_state_action(repeated_state, torch.arange(env.action_space.n), env.action_space.n)
         reward_map[s] += in_reward.get_reward(state_action).mean()
     return reward_map
 
 def get_full_state_reward(env, in_reward):
-    reward_map = torch.zeros(env.state_space.n, env.action_space.n).cuda()
+    reward_map = torch.zeros(env.state_space.n, env.action_space.n)
     for s in range(env.state_space.n):
         repeated_state = np.repeat(np.expand_dims(onehot_state(s, env.state_space.n), axis=0), env.action_space.n, axis=0)
-        repeated_state = torch.tensor(repeated_state).cuda()
+        repeated_state = torch.tensor(repeated_state)
 
-        state_action = onehot_states_to_state_action(repeated_state, torch.arange(env.action_space.n).cuda(), env.action_space.n)
+        state_action = onehot_states_to_state_action(repeated_state, torch.arange(env.action_space.n), env.action_space.n)
 
         reward_map[s,:] = torch.squeeze(in_reward.get_reward(state_action))
     return reward_map

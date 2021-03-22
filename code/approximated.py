@@ -51,12 +51,12 @@ def Get_Trajectory(env, agent, max_steps):
     return states, actions, rewards, log_probs
 
 
-def Run_Gridworld_Implicit(T1, T2, T3):
+def Run_Gridworld_Implicit(T1, T2, T3, approximate):
     env = GridWorld() # Creates Environment
     # agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
     in_reward = INTRINSIC_REWARD(env.state_space.n * env.action_space.n) #Create Intrinsic Reward Function, (S * A) --> (25) --> (1)
     in_gamma = INTRINSIC_GAMMA(env.state_space.n) #Creates Intrinsic Gamma (S) --> (25) --> (1)
-    max_timesteps = 100 # Max number of steps in an episode
+    max_timesteps = 1000 # Max number of steps in an episode
     for t1 in range(T1):
         agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
         for t2 in range(T2):
@@ -115,6 +115,8 @@ def Run_Gridworld_Implicit(T1, T2, T3):
             phi = 0
             d_phi = 0
             evaluate_d_phi = False
+            if(approximate):
+                evaluate_d_phi = False
 
             if(evaluate_d_phi):
                 phi, d_phi = get_param_gradient(agent, log_probs, get_sec_grads = True)
@@ -145,26 +147,41 @@ def Run_Gridworld_Implicit(T1, T2, T3):
             for t in range(T):
                 # === Computing H ===
                 phi_s_a = cumu_phi[t].unsqueeze(-1) #(num_params(agent), 1)
-                # (num_params(agent), num_params(agent))
-                cumu_phi_cum_phi_T = torch.matmul(phi_s_a, phi_s_a.T)
-                # TODO: make sure adding 2nd deriv right
-                H += (cumu_phi_cum_phi_T + cumu_d_phi[t]) * real_rewards[t]
-                
-                # === Computing A ===
+
+                # === Needed To Compute A ===
                 # (T - t)
                 k_gammas = get_cumulative_multiply_front(in_gammas[t:])
                 # (1, num_parameters(in_reward))
-                gamma_d_r = (d_in_reward[t:].T * k_gammas).sum(axis=1).unsqueeze(-1).T
-                # (num_parameters(agent), num_parameters(in_reward))
-                A += torch.matmul(phi_s_a, gamma_d_r)
+                gamma_d_r = (d_in_reward[t:].T * k_gammas).sum(axis=1).unsqueeze(-1)
+
+                if(not approximate):
+                    # (num_params(agent), num_params(agent))
+                    cumu_phi_cum_phi_T = torch.matmul(phi_s_a, phi_s_a.T)
+
+                    # TODO: make sure adding 2nd deriv right
+                    H += (cumu_phi_cum_phi_T + cumu_d_phi[t]) * real_rewards[t]
+                    
+                    # (num_parameters(agent), num_parameters(in_reward))
+                    A += torch.matmul(phi_s_a, gamma_d_r.T)
+                else:
+                    H += phi_s_a * phi_s_a * real_rewards[t]
+                    A += phi_s_a * gamma_d_r
 
         c /= T3
         H /= T3
-        H += torch.diag(torch.full((H.size()[0],),1e-6))
+        if(not approximate):
+            H += torch.diag(torch.full((H.size()[0],),1e-6))
+        else:
+            H += 1e-6
         A /= T3
 
         # TODO: Check
-        d_in_reward_params = - torch.matmul(c, torch.matmul(torch.inverse(H), A))
+        d_in_reward_params = None
+        if(not approximate):
+            d_in_reward_params = - torch.matmul(c, torch.matmul(torch.inverse(H), A))
+        else:
+            # print(c.size(), A.size(), H.size())
+            d_in_reward_params = -c * (A.squeeze() / H.squeeze())
         # print(c.shape, H.shape, A.shape, d_in_reward_params.shape, in_reward.model.linear1.weight.size())
 
         # Hack to maintain memory, check later
@@ -183,8 +200,8 @@ def Run_Gridworld_Implicit(T1, T2, T3):
         print("Average Steps: ", total_steps / T3)
         print("Average Actual Reward: ", total_average_actual_reward / T3)
         print("Average Intrinsic Reward: ", total_average_intrinsic_reward / T3)
-        print(in_rewards)
+        # print(in_rewards)
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(100, 10, 10)
+    Run_Gridworld_Implicit(100, 50, 20, True)
