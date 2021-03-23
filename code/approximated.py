@@ -11,6 +11,8 @@ from utils.helper import *
 # Memory Leak
 import gc
 
+import matplotlib.pyplot as plt
+
 # Updates Our Trajectory Information Given A One-Step Data Sample
 def update_and_get_action(env, agent, data, states, actions, rewards, log_probs):
     state = onehot_state(data["observation"], env.state_space.n)
@@ -59,7 +61,11 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
     # agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
     in_reward = INTRINSIC_REWARD(env.state_space.n * env.action_space.n) #Create Intrinsic Reward Function, (S * A) --> (25) --> (1)
     in_gamma = INTRINSIC_GAMMA(env.state_space.n) #Creates Intrinsic Gamma (S) --> (25) --> (1)
-    max_timesteps = 25 # Max number of steps in an episode
+    max_timesteps = 500 # Max number of steps in an episode
+    
+    # DEBUG
+    actual_reward_over_time = []
+
     for t1 in range(T1):
         # TODO: Can we keep the same agent across iterations?
         agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
@@ -170,15 +176,17 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
                     # (num_parameters(agent), num_parameters(in_reward))
                     A += torch.matmul(phi_s_a, gamma_d_r.T)
                 else:
+                    # (num_params(agent))
                     H += phi_s_a * phi_s_a * real_rewards[t]
+                    # (num_params(agent))
                     A += phi_s_a * gamma_d_r
 
         c /= T3
         H /= T3
         if(not approximate):
-            H += torch.diag(torch.full((H.size()[0],),1e-6))
+            H += torch.diag(torch.full((H.size()[0],),1e-10))
         else:
-            H += 1e-6
+            H += 1e-10
         A /= T3
 
         # TODO: Check, Sign of Gradient in Paper Is For Update
@@ -211,9 +219,16 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
         print(visited_states.view(5,5) / visited_states.sum())
         print("Average Steps: ", total_steps / T3)
         print("Average Actual Reward: ", total_average_actual_reward / T3)
+        actual_reward_over_time.append(total_average_actual_reward / T3)
         print("Average Intrinsic Reward: ", total_average_intrinsic_reward / T3)
         # print(in_rewards)
+        print("Iteration ", t1)
+    print("Actual Reward Over Time")
+    print(actual_reward_over_time)
+    plt.plot(actual_reward_over_time)
+    plt.ylabel("avg reward")
+    plt.show()
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(100, 200, 200, True)
+    Run_Gridworld_Implicit(100, 2000, 100, True)

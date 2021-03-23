@@ -27,7 +27,7 @@ def get_returns_t(rewards, gamma, normalize=False):
         R = r + gamma * R
         returns.insert(0, R)
 
-    returns = Variable(torch.tensor(returns).cuda(), requires_grad=True)
+    returns = Variable(torch.tensor(returns), requires_grad=False)
     if(normalize):
         returns = (returns - returns.mean()) / (returns.std() + eps)
     return returns

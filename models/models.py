@@ -35,7 +35,7 @@ class REINFORCE:
     def __init__(self, num_inputs, action_space):
         self.action_space = action_space
         self.model = Policy(num_inputs, action_space)
-        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-3)
+        self.optimizer = optim.SGD(self.model.parameters(), lr=1e-1)
         self.model.train()
 
     def select_action(self, state):
@@ -57,7 +57,7 @@ class REINFORCE:
         # returns = torch.tensor(returns)
         # returns = (returns - returns.mean()) / (returns.std() + eps)
 
-        returns = get_returns_t(rewards, gamma, normalize=True)
+        returns = get_returns_t(rewards, gamma, normalize=False)
         # print(returns)
 
         self.optimizer.zero_grad()
@@ -79,7 +79,7 @@ class Reward(nn.Module):
         super(Reward, self).__init__()
 
         self.linear1 = nn.Linear(num_inputs, 1, bias=False).double()
-        self.linear1.weight.data.fill_(0.0)
+        # self.linear1.weight.data.fill_(0.0)
 
     def forward(self, inputs):
         x = inputs
@@ -92,7 +92,7 @@ class Reward(nn.Module):
 class INTRINSIC_REWARD:
     def __init__(self, num_inputs):
         self.model = Reward(num_inputs)
-        self.optimizer = optim.SGD(self.model.parameters(), lr=1e-3)
+        self.optimizer = optim.SGD(self.model.parameters(), lr=5e-2)
         self.model.train()
 
     def get_reward(self, state_action):
@@ -125,5 +125,6 @@ class INTRINSIC_GAMMA:
 
     def get_gamma(self, state):
         gamma = self.model(state)
-        gamma = torch.full_like(gamma,0.95) # TODO: REMOVE THISSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSs
+        # TODO: (o___o)
+        gamma = torch.full_like(gamma,0.9) # TODO: REMOVE THISSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSs
         return gamma
