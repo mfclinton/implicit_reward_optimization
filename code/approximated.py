@@ -176,7 +176,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
                     cumu_phi_cum_phi_T = torch.matmul(phi_s_a, phi_s_a.T)
 
                     # TODO: make sure adding 2nd deriv right
-                    l = .5 #LAMBDA
+                    l = 0.8 #LAMBDA
                     gamma_H *= in_gammas[t]
                     right_term_H = gamma_H * (in_rewards[t] - l * log_probs[t])
                     H += (cumu_phi_cum_phi_T + cumu_d_phi[t]) * right_term_H
@@ -185,7 +185,10 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
                     A += torch.matmul(phi_s_a, gamma_d_r.T)
                 else:
                     # (num_params(agent))
-                    H += phi_s_a * phi_s_a * real_rewards[t]
+                    # Old
+                    # H += phi_s_a * phi_s_a * real_rewards[t]
+                    # New
+                    H += phi_s_a * phi_s_a * in_rewards[t]
                     # (num_params(agent))
                     A += phi_s_a * gamma_d_r
 
@@ -203,7 +206,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
             d_in_reward_params = torch.matmul(c, torch.matmul(torch.inverse(H), A))
         else:
             # print(c.size(), A.size(), H.size())
-            d_in_reward_params = c * (A.squeeze() / H.squeeze()) #TODO make negative
+            d_in_reward_params = - c * (A.squeeze() / H.squeeze()) #TODO make negative
         # print(c.shape, H.shape, A.shape, d_in_reward_params.shape, in_reward.model.linear1.weight.size())
 
         # Hack to maintain memory, check later
@@ -239,4 +242,4 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(100, 10, 50, False)
+    Run_Gridworld_Implicit(100, 300, 100, True)
