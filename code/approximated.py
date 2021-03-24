@@ -151,6 +151,11 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
 
             T = len(states)
 
+
+            # TEMP CHANGE
+            # TODO: FIX THIS
+            gamma_H = 1
+
             # Debugging
             total_steps += T
             total_average_actual_reward += real_rewards.sum()
@@ -162,7 +167,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
 
                 # === Needed To Compute A ===
                 # (T - t)
-                k_gammas = get_cumulative_multiply_front(in_gammas[t:])
+                k_gammas = get_cumulative_multiply_front(in_gammas[t:]) #TODO: check later
                 # (1, num_parameters(in_reward))
                 gamma_d_r = (d_in_reward[t:].T * k_gammas).sum(axis=1).unsqueeze(-1)
 
@@ -171,7 +176,10 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
                     cumu_phi_cum_phi_T = torch.matmul(phi_s_a, phi_s_a.T)
 
                     # TODO: make sure adding 2nd deriv right
-                    H += (cumu_phi_cum_phi_T + cumu_d_phi[t]) * real_rewards[t]
+                    l = .5 #LAMBDA
+                    gamma_H *= in_gammas[t]
+                    right_term_H = gamma_H * (in_rewards[t] - l * log_probs[t])
+                    H += (cumu_phi_cum_phi_T + cumu_d_phi[t]) * right_term_H
                     
                     # (num_parameters(agent), num_parameters(in_reward))
                     A += torch.matmul(phi_s_a, gamma_d_r.T)
@@ -231,4 +239,4 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(100, 2000, 100, True)
+    Run_Gridworld_Implicit(100, 10, 50, False)

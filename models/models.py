@@ -35,7 +35,7 @@ class REINFORCE:
     def __init__(self, num_inputs, action_space):
         self.action_space = action_space
         self.model = Policy(num_inputs, action_space)
-        self.optimizer = optim.SGD(self.model.parameters(), lr=1e-1)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-1)
         self.model.train()
 
     def select_action(self, state):
