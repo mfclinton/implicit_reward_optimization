@@ -218,12 +218,13 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
         in_gamma.optimizer.zero_grad()
         # TODO: Temporary hack for my NN
 
+        reward_map = get_full_state_reward(env, in_reward)
+
         in_reward.model.linear1.weight.grad = d_in_reward_params.unsqueeze(-1).T.detach()
         in_reward.optimizer.step()
 
         # DEBUGGING
         # print("--- Reward Map---")
-        reward_map = get_full_state_reward(env, in_reward)
         # print(reward_map)
         # print("--- Top Moves ---")
         # print(reward_map.argmax(axis=1).view(5,5))

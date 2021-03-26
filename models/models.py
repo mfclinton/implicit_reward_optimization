@@ -92,11 +92,21 @@ class Reward(nn.Module):
 class INTRINSIC_REWARD:
     def __init__(self, num_inputs):
         self.model = Reward(num_inputs)
-        self.optimizer = optim.SGD(self.model.parameters(), lr=5e-2)
+        self.optimizer = optim.SGD(self.model.parameters(), lr=5e-4)
         self.model.train()
 
     def get_reward(self, state_action):
         r = self.model(state_action)
+
+        # TEMP TEST
+        # non_zero_idx = state_action.nonzero()[:,1]
+        # states = non_zero_idx % 3
+        # actions = non_zero_idx // 3
+
+        # temp_reward = torch.tensor([[0,0,0],[0,1,0]])
+        # r = temp_reward[actions,states]
+
+
         return r
 
 # 
