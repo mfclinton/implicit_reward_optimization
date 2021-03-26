@@ -4,6 +4,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import numpy as np
 from envs.Gridworld import GridWorld
+from envs.ChrisWorld import ChrisWorld
 from models.models import REINFORCE, INTRINSIC_REWARD, INTRINSIC_GAMMA
 import torch.nn.functional as F
 import torch
@@ -57,7 +58,9 @@ def Get_Trajectory(env, agent, max_steps):
 
 
 def Run_Gridworld_Implicit(T1, T2, T3, approximate):
-    env = GridWorld() # Creates Environment
+    # env = GridWorld() # Creates Environment
+    env = ChrisWorld() #TODO remove this <-----
+
     # agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
     in_reward = INTRINSIC_REWARD(env.state_space.n * env.action_space.n) #Create Intrinsic Reward Function, (S * A) --> (25) --> (1)
     in_gamma = INTRINSIC_GAMMA(env.state_space.n) #Creates Intrinsic Gamma (S) --> (25) --> (1)
@@ -219,15 +222,17 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
         in_reward.optimizer.step()
 
         # DEBUGGING
-        print("--- Reward Map---")
+        # print("--- Reward Map---")
         reward_map = get_full_state_reward(env, in_reward)
+        # print(reward_map)
+        # print("--- Top Moves ---")
+        # print(reward_map.argmax(axis=1).view(5,5))
+        # print("--- Total Visited States ---")
+        # print(visited_states.view(5,5))
         print(reward_map)
-        print("--- Top Moves ---")
-        print(reward_map.argmax(axis=1).view(5,5))
-        print("--- Total Visited States ---")
-        print(visited_states.view(5,5))
-        print("--- Average Visited States ---")
-        print(visited_states.view(5,5) / visited_states.sum())
+        print(visited_states)
+        # print("--- Average Visited States ---")
+        # print(visited_states.view(5,5) / visited_states.sum())
         print("Average Steps: ", total_steps / T3)
         print("Average Actual Reward: ", total_average_actual_reward / T3)
         actual_reward_over_time.append(total_average_actual_reward / T3)

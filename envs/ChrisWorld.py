@@ -11,7 +11,7 @@ from matplotlib.patches import Rectangle, Circle, Arrow
 from matplotlib.ticker import NullLocator
 
 class ChrisWorld(gym.Env):
-    def __init__(self, do_heatmap=True):
+    def __init__(self):
         # customizable parameters
         self._start_state = 0
         self._end_states = [2]
@@ -19,15 +19,14 @@ class ChrisWorld(gym.Env):
         self.state_transition_matrix = torch.tensor([[1,2],[2,2]])
         self.reward_mapping = torch.tensor([[0,0],[0,1]])
 
-        # Debug
-        self.do_heatmap = do_heatmap
-
         # set environment state
         self.reset()
 
     def step(self, action: int):
-        next_state = state_transition_matrix[self._state]
-        reward = reward_mapping[next_state]
+        # print(self._state)
+        cur_state = self._state['observation'].numpy()[0]
+        next_state = self.state_transition_matrix[cur_state, action]
+        reward = self.reward_mapping[cur_state, action]
 
         self._reward = reward
         self._done = next_state in self._end_states
@@ -39,9 +38,6 @@ class ChrisWorld(gym.Env):
             'done': self._done
         }
         self._state = state_obj
-
-        if(self.do_heatmap):
-            self.update_heatmap(state_obj)
 
         return state_obj
 
@@ -55,9 +51,6 @@ class ChrisWorld(gym.Env):
         self._action = None
         self._timestep = 0
         self._done = False
-
-        if(self.do_heatmap):
-            self.heatmap = np.zeros(self._grid_dims)
 
     @property
     def state(self):
@@ -74,22 +67,6 @@ class ChrisWorld(gym.Env):
     @property
     def action_space(self):
         return Discrete(2)
-
-    def update_heatmap(self, state):
-        x, y = self.get_x_y(state)
-        if(x == 2 and y == 3):
-            print(state)
-        self.heatmap[y,x] += 1
-
-    def render_heatmap(self):
-        print("----- HEAT MAP -----")
-        # normalized_heatmap = (self.heatmap - np.min(self.heatmap)) / (np.max(self.heatmap) - np.min(self.heatmap))
-        print(self.heatmap / self.heatmap.sum())
-        print("---------")
-        # plt.imsave('heatmap.png', normalized_heatmap)
-        # self.ax = sns.heatmap(self.heatmap, linewidth=0.5)
-        # plt.show(block=False)
-        # print("render")
 
     def render(self):
         pass

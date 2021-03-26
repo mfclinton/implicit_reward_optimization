@@ -84,7 +84,7 @@ class Reward(nn.Module):
     def forward(self, inputs):
         x = inputs
         x = self.linear1(x)
-        # x = torch.tanh(x)
+        x = torch.tanh(x)
         # x = torch.sigmoid(x)
 
         return x
