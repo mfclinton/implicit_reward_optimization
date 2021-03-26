@@ -79,7 +79,7 @@ class Reward(nn.Module):
         super(Reward, self).__init__()
 
         self.linear1 = nn.Linear(num_inputs, 1, bias=False).double()
-        # self.linear1.weight.data.fill_(0.0)
+        self.linear1.weight.data.fill_(0.0)
 
     def forward(self, inputs):
         x = inputs

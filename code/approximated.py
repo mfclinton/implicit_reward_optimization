@@ -242,4 +242,4 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(100, 300, 100, True)
+    Run_Gridworld_Implicit(200, 1000, 100, True)
