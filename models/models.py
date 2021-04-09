@@ -20,7 +20,12 @@ class Policy(nn.Module):
     def __init__(self, num_inputs, action_space):
         super(Policy, self).__init__()
         self.action_space = action_space
-        num_outputs = action_space.n
+        if(type(action_space) is int):
+            num_outputs = action_space
+        else:
+            num_outputs = action_space.n
+
+        # print(num_outputs)
 
         self.linear1 = nn.Linear(num_inputs, num_outputs, bias=False).double()
         self.linear1.weight.data.fill_(0.) 
@@ -84,15 +89,15 @@ class Reward(nn.Module):
     def forward(self, inputs):
         x = inputs
         x = self.linear1(x)
-        x = torch.tanh(x)
-        # x = torch.sigmoid(x)
+        # x = torch.tanh(x)
+        x = torch.sigmoid(x)
 
         return x
 
 class INTRINSIC_REWARD:
     def __init__(self, num_inputs):
         self.model = Reward(num_inputs)
-        self.optimizer = optim.SGD(self.model.parameters(), lr=5e-4)
+        self.optimizer = optim.SGD(self.model.parameters(), lr=1e-2)
         self.model.train()
 
     def get_reward(self, state_action):

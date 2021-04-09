@@ -16,8 +16,8 @@ class ChrisWorld(gym.Env):
         self._start_state = 0
         self._end_states = [2]
 
-        self.state_transition_matrix = torch.tensor([[1,2],[2,2]])
-        self.reward_mapping = torch.tensor([[0,0],[0,1]])
+        self.state_transition_matrix = [[1,2],[2,2]]
+        self.reward_mapping = [[0,0],[0,1]]
 
         # set environment state
         self.reset()
@@ -25,8 +25,8 @@ class ChrisWorld(gym.Env):
     def step(self, action: int):
         # print(self._state)
         cur_state = self._state['observation'].numpy()[0]
-        next_state = self.state_transition_matrix[cur_state, action]
-        reward = self.reward_mapping[cur_state, action]
+        next_state = self.state_transition_matrix[cur_state][action]
+        reward = self.reward_mapping[cur_state][action]
 
         self._reward = reward
         self._done = next_state in self._end_states
@@ -66,7 +66,7 @@ class ChrisWorld(gym.Env):
 
     @property
     def action_space(self):
-        return Discrete(2)
+        return Discrete(1)
 
     def render(self):
         pass

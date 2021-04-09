@@ -4,10 +4,12 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import numpy as np
 from envs.Gridworld import GridWorld
+from envs.ChrisWorld import ChrisWorld
 from models.models import REINFORCE
 import torch.nn.functional as F
 import torch
 from utils.helper import *
+import math
 
 
 def Get_Trajectory(env, agent, max_steps):
@@ -21,7 +23,16 @@ def Get_Trajectory(env, agent, max_steps):
 
     def update_and_get_action(data):
         state = onehot_state(data["observation"], env.state_space.n)
-        action, log_prob = agent.select_action(state)
+        param = agent.model.forward(state)
+        prob = 1 / (1 + torch.exp(-param))
+        action = 0
+        if(np.random.rand() > prob):
+            action = 1
+            prob = 1 - prob
+        
+        log_prob = torch.log(prob)
+
+        # action, log_prob = agent.select_action(state)
 
         states.append(state)
         actions.append(action)
@@ -47,13 +58,15 @@ def Get_Trajectory(env, agent, max_steps):
 
 
 def Run_Gridworld(max_steps = 1000, episodes = 100):
-    env = GridWorld()
-    agent = REINFORCE(25, env.state_space.n, env.action_space)
+    env = ChrisWorld()
+    agent = REINFORCE(env.state_space.n, env.action_space)
 
     for episode in range(episodes):
         states, actions, rewards, log_probs = Get_Trajectory(env, agent, 1000)
         print(len(states))
         agent.update_parameters(rewards, log_probs, .95)
+        print(rewards)
+        # print(actions)
 
 if __name__ == "__main__":
     Run_Gridworld(episodes=500)

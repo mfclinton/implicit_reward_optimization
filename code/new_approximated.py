@@ -9,10 +9,32 @@ from models.models import REINFORCE, INTRINSIC_REWARD, INTRINSIC_GAMMA
 import torch.nn.functional as F
 import torch
 from utils.helper import *
+from utils.new_helper import *
 # Memory Leak
 import gc
 
 import matplotlib.pyplot as plt
+
+# IMPORTANCE SAMPLING STUFF
+def ImportantWeight(states, actions, cur_policy, new_policy):
+    is_weight_vec = new_policy[states,actions] / cur_policy[states,actions]
+    return is_weight_vec
+
+# TODO clean this up later
+def Get_OffPolicy_Trajectory(env, agent, other_agent, max_steps):
+    states, actions, rewards, log_probs = Get_Trajectory(env, other_agent, max_steps)
+    states_matrix = torch.stack(states, dim=0)
+    
+    # torch_idx = torch.nonzero(states_matrix)[:,1]
+    actions_idx = torch.tensor(actions)
+
+    other_agent_probs = other_agent.model(states_matrix)[actions_idx]
+    agent_probs = agent.model(states_matrix)[actions_idx]
+
+    # Not sure if correct, need to check pretty sure I shouldn't weight all rewards
+    rewards = torch.tensor(rewards) * agent_probs / other_agent_probs
+    return states, actions, rewards, log_probs
+    
 
 # Updates Our Trajectory Information Given A One-Step Data Sample
 def update_and_get_action(env, agent, data, states, actions, rewards, log_probs):
@@ -49,8 +71,6 @@ def Get_Trajectory(env, agent, max_steps):
         
         steps += 1
         if steps >= max_steps: #we've taken max_steps steps at this point
-            # for idx in range(len(rewards)):
-            #     rewards[idx] = -100.0 #TODO: check this later
             rewards[-1] = -100
             break
     
@@ -58,8 +78,8 @@ def Get_Trajectory(env, agent, max_steps):
 
 
 def Run_Gridworld_Implicit(T1, T2, T3, approximate):
-    # env = GridWorld() # Creates Environment
-    env = ChrisWorld() #TODO remove this <-----
+    env = GridWorld() # Creates Environment
+    off_policy_agent = REINFORCE(env.state_space.n, env.action_space)
 
     # agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
     in_reward = INTRINSIC_REWARD(env.state_space.n * env.action_space.n) #Create Intrinsic Reward Function, (S * A) --> (25) --> (1)
@@ -72,14 +92,15 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
     for t1 in range(T1):
         # TODO: Can we keep the same agent across iterations?
         agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
+        # agent = REINFORCE(env.state_space.n, env.action_space)
         for t2 in range(T2):
             # Get Trajectory returns lists of elements with the following dims
             # States, (S,)
             # Actions, (1,)
             # Real_Rewards, (1,)
             # Log_Probs, TODO
-            states, actions, real_rewards, log_probs = Get_Trajectory(env, agent, max_timesteps) #Samples a trajectory
-            
+            # states, actions, real_rewards, log_probs = Get_Trajectory(env, agent, max_timesteps) #Samples a trajectory
+            states, actions, real_rewards, log_probs = Get_OffPolicy_Trajectory(env, off_policy_agent, max_timesteps)
             # Creates a matrix of size (time_steps, S)
             states_matrix = torch.stack(states, dim=0)
             # Creates a State Action matrix of size (time_steps, S * A)
@@ -88,10 +109,13 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
             # Evaluates intrinsic reward and gamma
             in_rewards = in_reward.get_reward(state_actions).squeeze() #(time_steps, S*A) --> (time_steps, 1)
             in_gammas = in_gamma.get_gamma(states_matrix).squeeze() #(time_steps, S) --> (time_steps, 1)
-            cumu_gammas = get_cumulative_multiply_front(in_gammas)
+            
+            # cumu_gammas = get_cumulative_multiply_front(in_gammas)
+            cumu_gammas = Get_Cumulative_Gamma(in_gammas)
 
             # TODO: Check about ^t for each gamma in the traj
-            discounted_in_rewards = in_rewards * cumu_gammas
+            # only care about from start
+            discounted_in_rewards = in_rewards * cumu_gammas[0]
             
             # Hack: Set gamma to 1, pass in discounted rewards
             agent.update_parameters(discounted_in_rewards, log_probs, 1)
@@ -120,10 +144,13 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
             in_rewards = in_reward.get_reward(state_actions).squeeze() #(time_steps, S*A) --> (time_steps, 1)
             # (T)
             in_gammas = in_gamma.get_gamma(states_matrix).squeeze() #(time_steps, S) --> (time_steps, 1)
+            
             # (T)
-            cumu_gammas = get_cumulative_multiply_front(in_gammas)
-            # (T)
-            discounted_in_rewards = in_rewards * cumu_gammas
+            # cumu_gammas = get_cumulative_multiply_front(in_gammas)
+            cumu_gammas = Get_Cumulative_Gamma(in_gammas)
+            
+            # (T) Debug
+            discounted_in_rewards = in_rewards * cumu_gammas[0]
 
             # BOTH (T, num_params(agent))
             phi = 0
@@ -139,7 +166,8 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
 
 
             # (T, num_params(agent))
-            cumu_phi = get_cumulative_sum_front(phi)
+            # cumu_phi = get_cumulative_sum_front(phi)
+            cumu_phi = Get_Cumulative_Phi(phi)
 
             cumu_d_phi = torch.zeros(cumu_phi.size()[0])
             if(evaluate_d_phi):
@@ -150,50 +178,55 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
             d_in_reward = get_param_gradient(in_reward, in_rewards, get_sec_grads = False)
 
             # (num_params(agent))
-            c += (cumu_phi.T * real_rewards).T.sum(axis=0)
+            # c += (cumu_phi.T * real_rewards).T.sum(axis=0)
+            c += Calculate_C(cumu_phi, real_rewards)
+
+            if (approximate):
+                H += Approximate_H(cumu_phi, discounted_in_rewards)
+                A += Approximate_A(phi, cumu_gammas, d_in_reward)
+            else:
+                pass # TODO
 
             T = len(states)
-
-
-            # TEMP CHANGE
-            # TODO: FIX THIS
-            gamma_H = 1
-
             # Debugging
             total_steps += T
             total_average_actual_reward += real_rewards.sum()
             total_average_intrinsic_reward += discounted_in_rewards.sum()
             visited_states += states_matrix.sum(axis=0)
-            for t in range(T):
-                # === Computing H ===
-                phi_s_a = cumu_phi[t].unsqueeze(-1) #(num_params(agent), 1)
+            # for t in range(T):
+            #     # === Computing H ===
+            #     phi_s_a = cumu_phi[t].unsqueeze(-1) #(num_params(agent), 1)
 
-                # === Needed To Compute A ===
-                # (T - t)
-                k_gammas = get_cumulative_multiply_front(in_gammas[t:]) #TODO: check later
-                # (1, num_parameters(in_reward))
-                gamma_d_r = (d_in_reward[t:].T * k_gammas).sum(axis=1).unsqueeze(-1)
+            #     # === Needed To Compute A ===
+            #     # (T - t)
+            #     k_gammas = get_cumulative_multiply_front(in_gammas[t:]) #TODO: check later
+            #     # (1, num_parameters(in_reward))
+            #     # print(d_in_reward.size())
+            #     gamma_d_r = (d_in_reward[t:].T * k_gammas).sum(axis=1).unsqueeze(-1)
 
-                if(not approximate):
-                    # (num_params(agent), num_params(agent))
-                    cumu_phi_cum_phi_T = torch.matmul(phi_s_a, phi_s_a.T)
+            #     if(not approximate):
+            #         # (num_params(agent), num_params(agent))
+            #         cumu_phi_cum_phi_T = torch.matmul(phi_s_a, phi_s_a.T)
 
-                    # TODO: make sure adding 2nd deriv right
-                    l = 0.8 #LAMBDA
-                    gamma_H *= in_gammas[t]
-                    right_term_H = gamma_H * (in_rewards[t] - l * log_probs[t])
-                    H += (cumu_phi_cum_phi_T + cumu_d_phi[t]) * right_term_H
+            #         # TODO: make sure adding 2nd deriv right
+            #         l = 0.8 #LAMBDA
+            #         gamma_H *= in_gammas[t]
+            #         right_term_H = gamma_H * (in_rewards[t] - l * log_probs[t])
+            #         H += (cumu_phi_cum_phi_T + cumu_d_phi[t]) * right_term_H
                     
-                    # (num_parameters(agent), num_parameters(in_reward))
-                    A += torch.matmul(phi_s_a, gamma_d_r.T)
-                else:
-                    # (num_params(agent))
-                    # Old
-                    # H += phi_s_a * phi_s_a * real_rewards[t]
-                    # New
-                    H += phi_s_a * phi_s_a * in_rewards[t]
-                    # (num_params(agent))
-                    A += phi_s_a * gamma_d_r
+            #         # (num_parameters(agent), num_parameters(in_reward))
+            #         A += torch.matmul(phi_s_a, gamma_d_r.T)
+            #     else:
+            #         # (num_params(agent))
+            #         # Old
+            #         # H += phi_s_a * phi_s_a * real_rewards[t]
+            #         # New
+            #         H += phi_s_a * phi_s_a * in_rewards[t]
+            #         # (num_params(agent))
+            #         # print(phi_s_a.size(), gamma_d_r.size())
+            #         # print(gamma_d_r)
+            #         # print(phi[t].view((-1, 1)).size(), gamma_d_r.size())
+            #         A += phi[t].view((-1, 1)) * gamma_d_r
 
         c /= T3
         H /= T3
@@ -210,7 +243,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
         else:
             # print(c.size(), A.size(), H.size())
             d_in_reward_params = - c * (A.squeeze() / H.squeeze()) #TODO make negative
-        # print(c.shape, H.shape, A.shape, d_in_reward_params.shape, in_reward.model.linear1.weight.size())
+        print(c.shape, H.shape, A.shape, d_in_reward_params.shape, in_reward.model.linear1.weight.size())
 
         # Hack to maintain memory, check later
         agent.optimizer.zero_grad()
@@ -227,13 +260,13 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
         # print("--- Reward Map---")
         # print(reward_map)
         # print("--- Top Moves ---")
-        # print(reward_map.argmax(axis=1).view(5,5))
+        print(reward_map.argmax(axis=1).view(5,5))
         # print("--- Total Visited States ---")
-        # print(visited_states.view(5,5))
-        print(reward_map)
-        print(visited_states)
+        print(visited_states.view(5,5))
+        # print(reward_map)
+        # print(visited_states)
         # print("--- Average Visited States ---")
-        # print(visited_states.view(5,5) / visited_states.sum())
+        print(visited_states.view(5,5) / visited_states.sum())
         print("Average Steps: ", total_steps / T3)
         print("Average Actual Reward: ", total_average_actual_reward / T3)
         actual_reward_over_time.append(total_average_actual_reward / T3)
@@ -248,4 +281,4 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(200, 1000, 100, True)
+    Run_Gridworld_Implicit(200, 100, 50, True)
