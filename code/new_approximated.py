@@ -27,13 +27,15 @@ def Get_OffPolicy_Trajectory(env, agent, other_agent, max_steps):
     
     # torch_idx = torch.nonzero(states_matrix)[:,1]
     actions_idx = torch.tensor(actions)
-
-    other_agent_probs = other_agent.model(states_matrix)[actions_idx]
-    agent_probs = agent.model(states_matrix)[actions_idx]
+    T = actions_idx.size()[0]
+    other_agent_probs = other_agent.model(states_matrix)[torch.arange(T),actions_idx]
+    agent_probs = agent.model(states_matrix)[torch.arange(T),actions_idx]
+    # print(agent_probs, actions_idx)
+    # print(log_probs, torch.log(agent_probs))
 
     # Not sure if correct, need to check pretty sure I shouldn't weight all rewards
-    rewards = torch.tensor(rewards) * agent_probs / other_agent_probs
-    return states, actions, rewards, log_probs
+    is_weight = torch.prod(agent_probs / other_agent_probs)
+    return states, actions, rewards, torch.log(agent_probs), is_weight
     
 
 # Updates Our Trajectory Information Given A One-Step Data Sample
@@ -99,8 +101,8 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
             # Actions, (1,)
             # Real_Rewards, (1,)
             # Log_Probs, TODO
-            # states, actions, real_rewards, log_probs = Get_Trajectory(env, agent, max_timesteps) #Samples a trajectory
-            states, actions, real_rewards, log_probs = Get_OffPolicy_Trajectory(env, off_policy_agent, max_timesteps)
+            # states, actions, real_rewards, log_probs = Get_Trajectory(env, agent, max_timesteps) #Samples a trajectory 
+            states, actions, rewards, log_probs, is_weight = Get_OffPolicy_Trajectory(env, agent, off_policy_agent, max_timesteps)
             # Creates a matrix of size (time_steps, S)
             states_matrix = torch.stack(states, dim=0)
             # Creates a State Action matrix of size (time_steps, S * A)
@@ -115,7 +117,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
 
             # TODO: Check about ^t for each gamma in the traj
             # only care about from start
-            discounted_in_rewards = in_rewards * cumu_gammas[0]
+            discounted_in_rewards = in_rewards * cumu_gammas[0] * is_weight
             
             # Hack: Set gamma to 1, pass in discounted rewards
             agent.update_parameters(discounted_in_rewards, log_probs, 1)
@@ -281,4 +283,4 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(200, 100, 50, True)
+    Run_Gridworld_Implicit(200, 250, 50, True)
