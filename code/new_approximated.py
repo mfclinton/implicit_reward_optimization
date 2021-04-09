@@ -15,27 +15,29 @@ import gc
 
 import matplotlib.pyplot as plt
 
-# IMPORTANCE SAMPLING STUFF
-def ImportantWeight(states, actions, cur_policy, new_policy):
-    is_weight_vec = new_policy[states,actions] / cur_policy[states,actions]
-    return is_weight_vec
+# # IMPORTANCE SAMPLING STUFF
+# def ImportantWeight(states, actions, cur_policy, new_policy):
+#     is_weight_vec = new_policy[states,actions] / cur_policy[states,actions]
+#     return is_weight_vec
 
-# TODO clean this up later
-def Get_OffPolicy_Trajectory(env, agent, other_agent, max_steps):
-    states, actions, rewards, log_probs = Get_Trajectory(env, other_agent, max_steps)
-    states_matrix = torch.stack(states, dim=0)
+# # TODO clean this up later
+# def Get_OffPolicy_Trajectory(env, agent, other_agent, max_steps):
+#     states, actions, rewards, log_probs = Get_Trajectory(env, other_agent, max_steps)
+#     states_matrix = torch.stack(states, dim=0)
     
-    # torch_idx = torch.nonzero(states_matrix)[:,1]
-    actions_idx = torch.tensor(actions)
-    T = actions_idx.size()[0]
-    other_agent_probs = other_agent.model(states_matrix)[torch.arange(T),actions_idx]
-    agent_probs = agent.model(states_matrix)[torch.arange(T),actions_idx]
-    # print(agent_probs, actions_idx)
-    # print(log_probs, torch.log(agent_probs))
+#     # torch_idx = torch.nonzero(states_matrix)[:,1]
+#     actions_idx = torch.tensor(actions)
+#     T = actions_idx.size()[0]
+#     other_agent_probs = other_agent.model(states_matrix)[torch.arange(T),actions_idx]
+#     agent_probs = agent.model(states_matrix)[torch.arange(T),actions_idx]
+#     # print(agent_probs, actions_idx)
+#     # print(log_probs, torch.log(agent_probs))
 
-    # Not sure if correct, need to check pretty sure I shouldn't weight all rewards
-    is_weight = torch.prod(agent_probs / other_agent_probs)
-    return states, actions, rewards, torch.log(agent_probs), is_weight
+#     # Not sure if correct, need to check pretty sure I shouldn't weight all rewards
+#     is_weight = torch.prod(agent_probs / other_agent_probs)
+#     is_weight = 1
+#     # print(is_weight)
+#     return states, actions, rewards, torch.log(agent_probs), is_weight
     
 
 # Updates Our Trajectory Information Given A One-Step Data Sample
@@ -91,6 +93,10 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
     # DEBUG
     actual_reward_over_time = []
 
+    reuse_trajectories = True #TODO make this a parameter
+    trajectories = []
+
+
     for t1 in range(T1):
         # TODO: Can we keep the same agent across iterations?
         agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
@@ -102,7 +108,15 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
             # Real_Rewards, (1,)
             # Log_Probs, TODO
             # states, actions, real_rewards, log_probs = Get_Trajectory(env, agent, max_timesteps) #Samples a trajectory 
-            states, actions, rewards, log_probs, is_weight = Get_OffPolicy_Trajectory(env, agent, off_policy_agent, max_timesteps)
+            if not reuse_trajectories:
+                # states, actions, rewards, log_probs, is_weight = Get_OffPolicy_Trajectory(env, agent, off_policy_agent, max_timesteps)
+                states, actions, real_rewards, log_probs = Get_Trajectory(env, agent, max_timesteps)
+            else:
+                # Rudimentary implementation to be updated when I wake up
+                if(len(trajectories) == 0):
+                    break
+                states, actions, real_rewards, log_probs = trajectories.pop(0)
+
             # Creates a matrix of size (time_steps, S)
             states_matrix = torch.stack(states, dim=0)
             # Creates a State Action matrix of size (time_steps, S * A)
@@ -117,7 +131,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
 
             # TODO: Check about ^t for each gamma in the traj
             # only care about from start
-            discounted_in_rewards = in_rewards * cumu_gammas[0] * is_weight
+            discounted_in_rewards = in_rewards * cumu_gammas[0]
             
             # Hack: Set gamma to 1, pass in discounted rewards
             agent.update_parameters(discounted_in_rewards, log_probs, 1)
@@ -134,6 +148,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
         for t3 in range(T3):
             #Same as before
             states, actions, real_rewards, log_probs = Get_Trajectory(env, agent, max_timesteps) #Samples a trajectory
+            trajectories.append((states, actions, real_rewards, log_probs))
             # (T)
             real_rewards = torch.tensor(real_rewards, requires_grad=False)
 
@@ -260,7 +275,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
 
         # DEBUGGING
         # print("--- Reward Map---")
-        # print(reward_map)
+        print(reward_map)
         # print("--- Top Moves ---")
         print(reward_map.argmax(axis=1).view(5,5))
         # print("--- Total Visited States ---")
@@ -275,12 +290,13 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate):
         print("Average Intrinsic Reward: ", total_average_intrinsic_reward / T3)
         # print(in_rewards)
         print("Iteration ", t1)
-    print("Actual Reward Over Time")
+    print("Actual Reward Over Time") # still need to rescale graph
     print(actual_reward_over_time)
     plt.plot(actual_reward_over_time)
     plt.ylabel("avg reward")
     plt.show()
+    # TODO: Need to elongate graph to inclue the inner updates
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(200, 250, 50, True)
+    Run_Gridworld_Implicit(100, 100, 100, True)
