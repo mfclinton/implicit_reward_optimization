@@ -21,6 +21,9 @@ def Approximate_A(phi, cumu_gamma, d_inner_reward):
 def Calculate_C(cumu_phi, real_rewards):
     return (cumu_phi.T * real_rewards).T.sum(dim=0)
 
+# TODO: CHECK THIS
+# def Calculate_B()
+
 # <desc> inner_gamma: intrinsic gamma values, shape (N,))
 # <returns> cumu_gamma, cumulative sum of gamma starting from the row index, shape (N, N)
 def Get_Cumulative_Gamma(inner_gamma):

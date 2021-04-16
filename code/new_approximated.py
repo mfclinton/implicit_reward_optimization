@@ -184,10 +184,14 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
 
             # (T, num_params(in_reward))
             d_in_reward = get_param_gradient(in_reward, in_rewards, get_sec_grads = False)
+            # TODO: GAMMA
+            # d_in_gamma = get_param_gradient(in_gamma, in_gammas, get_sec_grads = False)
 
             # (num_params(agent))
             # c += (cumu_phi.T * real_rewards).T.sum(axis=0)
             c += Calculate_C(cumu_phi, real_rewards)
+            # b += cumu_phi * in_gammas * d_in_gamma * ( - log_probs)
+            # b += Calculate_B()
 
             if (approximate):
                 H += Approximate_H(cumu_phi, discounted_in_rewards)
@@ -277,4 +281,4 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(100, 250, 50, True, True)
+    Run_Gridworld_Implicit(100, 250, 50, True, False)
