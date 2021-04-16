@@ -14,10 +14,10 @@ class ChrisWorld(gym.Env):
     def __init__(self):
         # customizable parameters
         self._start_state = 0
-        self._end_states = [2]
+        self._end_states = [3, 6]
 
-        self.state_transition_matrix = [[1,2],[2,2]]
-        self.reward_mapping = [[0,0],[0,1]]
+        self.state_transition_matrix = [[1,4],[2,2],[3,3],[3,3],[5,5],[6,6],[6,6]]
+        self.reward_mapping = [[1,0],[0,0],[0,0],[0,0],[0,0],[2,2],[0,0]]
 
         # set environment state
         self.reset()
@@ -58,15 +58,15 @@ class ChrisWorld(gym.Env):
 
     @property
     def state_space(self):
-        return Discrete(3)
+        return Discrete(7)
 
     @property
     def observation_space(self):
-        return Discrete(3)
+        return Discrete(7)
 
     @property
     def action_space(self):
-        return Discrete(3)
+        return Discrete(7)
 
     def render(self):
         pass

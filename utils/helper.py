@@ -19,41 +19,41 @@ def onehot_states_to_state_action(encoded_states, actions, num_actions):
     encoded[idx[:,0], idx[:,1]] = 1
     return encoded
 
-def get_returns_t(rewards, gamma, normalize=False):
-    eps = 1e-5
-    R = 0
-    returns = []
-    for i in reversed(range(len(rewards))):
-        r = rewards[i]
-        R = gamma[i] * (r + R)
-        returns.insert(0, R)
+# def get_returns_t(rewards, gamma, normalize=False):
+#     eps = 1e-5
+#     R = 0
+#     returns = []
+#     for i in reversed(range(len(rewards))):
+#         r = rewards[i]
+#         R = gamma[i] * (r + R)
+#         returns.insert(0, R)
 
-    returns = Variable(torch.tensor(returns), requires_grad=False)
-    if(normalize):
-        returns = (returns - returns.mean()) / (returns.std() + eps)
-    return returns
+#     returns = Variable(torch.tensor(returns), requires_grad=False)
+#     if(normalize):
+#         returns = (returns - returns.mean()) / (returns.std() + eps)
+#     return returns
 
-def get_cumulative_sum_front(x):
-    total = 0
-    cumu_sums = torch.zeros_like(x)
+# def get_cumulative_sum_front(x):
+#     total = 0
+#     cumu_sums = torch.zeros_like(x)
 
-    for i in range(x.shape[0]):
-        value = x[i]
-        # print(value, x.shape)
-        total = value + total
-        cumu_sums[i] = total
-    return cumu_sums
+#     for i in range(x.shape[0]):
+#         value = x[i]
+#         # print(value, x.shape)
+#         total = value + total
+#         cumu_sums[i] = total
+#     return cumu_sums
 
-def get_cumulative_multiply_front(x):
-    total = 1
-    cumu_mul = torch.ones_like(x)
+# def get_cumulative_multiply_front(x):
+#     total = 1
+#     cumu_mul = torch.ones_like(x)
 
-    for i in range(x.shape[0]):
-        value = x[i]
-        # print(value, x.shape)
-        total = value * total
-        cumu_mul[i] = total
-    return cumu_mul
+#     for i in range(x.shape[0]):
+#         value = x[i]
+#         # print(value, x.shape)
+#         total = value * total
+#         cumu_mul[i] = total
+#     return cumu_mul
 
 def get_param_gradient(model, values, get_sec_grads = False):
     # (T, num_parameters(model))

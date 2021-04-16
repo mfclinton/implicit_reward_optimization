@@ -79,8 +79,8 @@ class Chris_Policy(nn.Module):
 
 class CHRIS_REINFORCE:
     def __init__(self):
-        self.num_inputs = 3
-        self.num_actions = 3
+        self.num_inputs = 7
+        self.num_actions = 7
         self.reset()
 
     def reset(self):
@@ -186,5 +186,5 @@ class INTRINSIC_GAMMA:
     def get_gamma(self, state):
         gamma = self.model(state)
         # TODO: (o___o)
-        gamma = torch.full_like(gamma,0.9) # TODO: REMOVE THISSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSs
+        gamma = torch.full_like(gamma,0.4) # TODO: REMOVE THISSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSs
         return gamma
