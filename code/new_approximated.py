@@ -51,21 +51,33 @@ def Get_Trajectory(env, agent):
     
     return states, torch.tensor(actions), torch.tensor(rewards), log_probs
 
+# Make this better
+def Get_Prior_Reward(env):
+    # Run to right
+    reward_1 = torch.full((env.action_space.n * env.state_space.n,), -1.)
+    reward_1[env.state_space.n * 3:] = 1.0
+    return reward_1
+
+
 
 def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
-    # env = GridWorld() # Creates Environment
-    env = ChrisWorld() #TODO: remove
+    Use_Chris_World = False
+    Save_Data = True
+    
+    env = GridWorld() # Creates Environment
+    agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
+
+    if Use_Chris_World:
+        env = ChrisWorld() #TODO: remove
+        agent = CHRIS_REINFORCE() #TODO: remove
 
     # agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
-    in_reward = INTRINSIC_REWARD(env.state_space.n * env.action_space.n) #Create Intrinsic Reward Function, (S * A) --> (25) --> (1)
+    in_reward = INTRINSIC_REWARD(env.state_space.n * env.action_space.n, Get_Prior_Reward(env)) #Create Intrinsic Reward Function, (S * A) --> (25) --> (1)
     in_gamma = INTRINSIC_GAMMA(env.state_space.n) #Creates Intrinsic Gamma (S) --> (25) --> (1)
     
     # DEBUG
     actual_reward_over_time = []
     trajectories = []
-
-    # agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
-    agent = CHRIS_REINFORCE() #TODO: remove
     for t1 in range(T1):
         # TODO: Can we keep the same agent across iterations?
         # agent = REINFORCE(env.state_space.n, env.action_space)
@@ -221,12 +233,17 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         # DEBUGGING
         print("--- Reward Map---")
         print(reward_map)
-        print("--- Top Moves ---")
-        # print(reward_map.argmax(axis=1).view(5,5))
-        print(reward_map.argmax(axis=1))
-        print("--- Total Visited States ---")
-        # print(visited_states.view(5,5))
-        print(visited_states)
+        if not Use_Chris_World:
+            print("--- Top Moves ---")
+            print(reward_map.argmax(axis=1).view(5,5))
+            print("--- Total Visited States ---")
+            print(visited_states.view(5,5))
+        else:
+            print("--- Top Moves ---")
+            print(reward_map.argmax(axis=1))
+            print("--- Total Visited States ---")
+            print(visited_states)
+
         print("--- Other ---")
         print("Average Steps: ", total_steps / T3)
         print("Average Actual Reward: ", total_average_actual_reward / T3)
@@ -234,20 +251,26 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         # print(in_rewards)
         print("Iteration ", t1)
     
-    result_path =  "saved\\reward_{0}_{1}_{2}_({3},{4},{5})\\".format(actual_reward_over_time[-1].item(), approximate, reuse_trajectories, T1, T2, T3)
-    # os.mkdir(result_path)
-    # torch.save(in_reward.model.state_dict(), result_path + "reward_model")
-    # torch.save(in_gamma.model.state_dict(), result_path + "gamma_model")
-    
+
+    c_word_str = "c_word" if Use_Chris_World == True else ""
+    using_prior_str = "with_prior" if in_reward.prior_reward != None else ""
+    result_path =  "saved\\reward_{0}_{1}_{2}_({3},{4},{5})_{6}_{7}\\".format(actual_reward_over_time[-1].item(), approximate, reuse_trajectories, T1, T2, T3, c_word_str, using_prior_str)
 
     print("Actual Reward Over Time") # still need to rescale graph
     print(actual_reward_over_time)
     plt.plot(actual_reward_over_time)
     plt.ylabel("avg reward")
-    # plt.savefig(result_path + "graph.png")
+
+    if Save_Data:
+        os.mkdir(result_path)
+        
+        torch.save(in_reward.model.state_dict(), result_path + "reward_model")
+        torch.save(in_gamma.model.state_dict(), result_path + "gamma_model")
+        plt.savefig(result_path + "graph.png")
+
     plt.show()
     # TODO: Need to elongate graph to inclue the inner updates
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(100, 200, 50, True, False)
+    Run_Gridworld_Implicit(100, 200, 75, True, True)

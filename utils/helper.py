@@ -115,6 +115,6 @@ def get_full_state_reward(env, in_reward):
         repeated_state = torch.tensor(repeated_state)
 
         state_action = onehot_states_to_state_action(repeated_state, torch.arange(env.action_space.n), env.action_space.n)
-
         reward_map[s,:] = torch.squeeze(in_reward.get_reward(state_action))
+
     return reward_map

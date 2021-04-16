@@ -197,16 +197,29 @@ class Reward(nn.Module):
         return x
 
 class INTRINSIC_REWARD:
-    def __init__(self, num_inputs):
+    def __init__(self, num_inputs, prior_reward):
+        self.prior_reward = prior_reward.view(-1)
         self.model = Reward(num_inputs)
         self.optimizer = optim.SGD(self.model.parameters(), lr=1e-1)
         self.model.train()
 
     def get_reward(self, state_action):
         r = self.model(state_action)
+        
+        if self.prior_reward != None:
+            non_zero_idx = state_action.nonzero()[:,1]
+            prior_r = self.prior_reward[non_zero_idx].view(-1,1)
+            # print(prior_r.size(), r.size())
+            r += prior_r
+
+        # non_zero_idx = state_action.nonzero()[:,1]
+        # states = non_zero_idx % 3
+        # actions = non_zero_idx // 3
+        # print(non_zero_idx)
+        # 1/0
 
         # TEMP TEST
-        # non_zero_idx = state_action.nonzero()[:,1]
+        # 
         # states = non_zero_idx % 3
         # actions = non_zero_idx // 3
 
@@ -243,5 +256,5 @@ class INTRINSIC_GAMMA:
     def get_gamma(self, state):
         gamma = self.model(state)
         # TODO: (o___o)
-        gamma = torch.full_like(gamma,0.4) # TODO: REMOVE THISSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSs
+        gamma = torch.full_like(gamma,0.2) # TODO: REMOVE THISSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSs
         return gamma
