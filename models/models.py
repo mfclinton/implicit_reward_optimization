@@ -256,5 +256,5 @@ class INTRINSIC_GAMMA:
     def get_gamma(self, state):
         gamma = self.model(state)
         # TODO: (o___o)
-        gamma = torch.full_like(gamma,0.2) # TODO: REMOVE THISSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSs
+        gamma = torch.full_like(gamma,0.9) # TODO: REMOVE THISSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSs
         return gamma
