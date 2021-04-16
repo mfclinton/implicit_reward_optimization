@@ -12,6 +12,7 @@ import torch.nn.utils as utils
 from torch.distributions import Categorical
 from utils.helper import *
 from utils.new_helper import *
+import pandas as pd
 # Memory Leak
 import gc
 import random
@@ -72,7 +73,8 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         agent = CHRIS_REINFORCE() #TODO: remove
 
     # agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
-    in_reward = INTRINSIC_REWARD(env.state_space.n * env.action_space.n, Get_Prior_Reward(env)) #Create Intrinsic Reward Function, (S * A) --> (25) --> (1)
+    in_reward = INTRINSIC_REWARD(env.state_space.n * env.action_space.n, None) #Create Intrinsic Reward Function, (S * A) --> (25) --> (1)
+    # in_reward = INTRINSIC_REWARD(env.state_space.n * env.action_space.n, Get_Prior_Reward(env)) #Create Intrinsic Reward Function, (S * A) --> (25) --> (1)
     in_gamma = INTRINSIC_GAMMA(env.state_space.n) #Creates Intrinsic Gamma (S) --> (25) --> (1)
     
     # DEBUG
@@ -126,8 +128,9 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
             # agent.update_parameters(torch.tensor(real_rewards), log_probs, cumu_gammas)
         
             # Debug Stuff
-            actual_return = real_rewards.sum()
-            actual_reward_over_time.append(actual_return)
+            if(not reuse_trajectories):
+                actual_return = real_rewards.sum()
+                actual_reward_over_time.append(actual_return)
 
         c = 0
         H = 0
@@ -266,7 +269,9 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
 
     print("Actual Reward Over Time") # still need to rescale graph
     print(actual_reward_over_time)
-    plt.plot(actual_reward_over_time)
+    s = pd.Series(actual_reward_over_time)
+    # print(s.rolling(50).mean())
+    plt.plot(s.rolling(50).mean())
     plt.ylabel("avg reward")
 
     if Save_Data:
@@ -281,4 +286,4 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(100, 250, 50, True, True)
+    Run_Gridworld_Implicit(100, 200, 50, True, False)

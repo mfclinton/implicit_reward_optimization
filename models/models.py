@@ -198,7 +198,10 @@ class Reward(nn.Module):
 
 class INTRINSIC_REWARD:
     def __init__(self, num_inputs, prior_reward):
-        self.prior_reward = prior_reward.view(-1)
+        self.prior_reward = prior_reward
+        if prior_reward != None:
+            self.prior_reward = prior_reward.view(-1)
+
         self.model = Reward(num_inputs)
         self.optimizer = optim.SGD(self.model.parameters(), lr=1e-1)
         self.model.train()
