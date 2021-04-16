@@ -125,6 +125,10 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
             agent.update_parameters(in_rewards, log_probs, cumu_gammas)
             # agent.update_parameters(torch.tensor(real_rewards), log_probs, cumu_gammas)
         
+            # Debug Stuff
+            actual_return = real_rewards.sum()
+            actual_reward_over_time.append(actual_return)
+
         c = 0
         H = 0
         A = 0
@@ -273,4 +277,4 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(100, 200, 75, True, True)
+    Run_Gridworld_Implicit(100, 250, 50, True, True)
