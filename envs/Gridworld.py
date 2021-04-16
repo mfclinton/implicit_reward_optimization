@@ -19,6 +19,10 @@ class GridWorld(gym.Env):
         self._obstacle_states = obstacle_states
         self._water_states = water_states
 
+        # Max Steps
+        self.max_steps = 500
+        self.out_of_time_reward = -100
+
         # stochasticity
         self._prStay = 0.1
         self._prRotate = 0.05
@@ -42,8 +46,14 @@ class GridWorld(gym.Env):
         next_state = self._calc_next_state(self._state['observation'].numpy()[0], action)
         reward = self._calc_reward(next_state)
 
-        self._reward = reward
         self._done = next_state in self._end_states
+
+        # Exceeded max timesteps, we are done
+        if(self._timestep >= self.max_steps):
+            reward = self.out_of_time_reward
+            self._done = True
+
+        self._reward = reward
         self._timestep += 1
 
         state_obj = {

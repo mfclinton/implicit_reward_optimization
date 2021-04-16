@@ -16,7 +16,6 @@ def onehot_states_to_state_action(encoded_states, actions, num_actions):
     idx = torch.nonzero(encoded_states)
     idx[:,1] += torch.tensor(actions, requires_grad=False) * num_states
     encoded = torch.zeros((time_steps, num_states * num_actions), dtype=torch.double, requires_grad=False)
-    # print(idx)
     encoded[idx[:,0], idx[:,1]] = 1
     return encoded
 
@@ -26,7 +25,7 @@ def get_returns_t(rewards, gamma, normalize=False):
     returns = []
     for i in reversed(range(len(rewards))):
         r = rewards[i]
-        R = r + gamma * R
+        R = gamma[i] * (r + R)
         returns.insert(0, R)
 
     returns = Variable(torch.tensor(returns), requires_grad=False)

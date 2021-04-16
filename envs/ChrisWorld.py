@@ -66,7 +66,7 @@ class ChrisWorld(gym.Env):
 
     @property
     def action_space(self):
-        return Discrete(1)
+        return Discrete(3)
 
     def render(self):
         pass
