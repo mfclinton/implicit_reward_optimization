@@ -62,7 +62,7 @@ def Get_Prior_Reward(env):
 
 
 def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
-    Use_Chris_World = False
+    Use_Chris_World = True
     Save_Data = True
     
     env = GridWorld() # Creates Environment
@@ -286,4 +286,4 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(100, 200, 50, True, False)
+    Run_Gridworld_Implicit(10, 50, 50, True, False)
