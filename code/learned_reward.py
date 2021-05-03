@@ -5,6 +5,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import numpy as np
 from envs.Gridworld import GridWorld
 from envs.ChrisWorld import ChrisWorld
+from envs.SimpleBandit import SimpleBandit
+
+
 from models.models import REINFORCE, INTRINSIC_REWARD, INTRINSIC_GAMMA, CHRIS_REINFORCE
 import torch.nn.functional as F
 import torch
@@ -113,10 +116,11 @@ def Get_Prior_Reward(env, prior_id):
 
 def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
     Use_Chris_World = False
-    Save_Data = True
+    Save_Data = False
     prior_id = -1
     
-    env = GridWorld() # Creates Environment
+    # env = GridWorld() # Creates Environment
+    env = SimpleBandit()
     agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
 
     if Use_Chris_World:
@@ -256,9 +260,11 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
             T = len(states)
             # Debugging
             total_steps += T
+            # print(real_rewards)
             actual_return = real_rewards.sum()
             actual_reward_over_time.append(actual_return)
             total_average_actual_reward += actual_return
+            # print(total_average_actual_reward)
             total_average_intrinsic_reward += discounted_in_rewards.sum()
             visited_states += states_matrix.sum(axis=0)
 
@@ -278,7 +284,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         else:
             # print(c.size(), A.size(), H.size())
             d_in_reward_params = - c * (A.squeeze() / H.squeeze()) #TODO make negative
-        print(c.shape, H.shape, A.shape, d_in_reward_params.shape, in_reward.model.linear1.weight.size())
+        # print(c.shape, H.shape, A.shape, d_in_reward_params.shape, in_reward.model.linear1.weight.size())
 
         # Hack to maintain memory, check later
         agent.optimizer.zero_grad()
@@ -297,9 +303,9 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         print(reward_map)
         if not Use_Chris_World:
             print("--- Top Moves ---")
-            print(reward_map.argmax(axis=1).view(5,5))
+            print(reward_map.argmax(axis=1))#.view(5,5))
             print("--- Total Visited States ---")
-            print(visited_states.view(5,5))
+            print(visited_states)#.view(5,5))
         else:
             print("--- Top Moves ---")
             print(reward_map.argmax(axis=1))
@@ -317,13 +323,13 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         print("FINAL REWARD MAP")
         reward_map = get_full_state_reward(env, in_reward)
         print(reward_map)
-        print(reward_map.argmax(axis=1).view(5,5))
+        print(reward_map.argmax(axis=1))#.view(5,5))
         if in_reward.prior_reward != None:
             print("VISUALIZE LEARNED REWARD FUNCTION W/O PRIOR")
             in_reward.prior_reward *= -1
             reward_map = get_full_state_reward(env, in_reward)
             print(reward_map)
-            print(reward_map.argmax(axis=1).view(5,5))
+            print(reward_map.argmax(axis=1))#.view(5,5))
             in_reward.prior_reward *= -1
 
 
@@ -356,4 +362,4 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(50, 500, 100, True, True)
+    Run_Gridworld_Implicit(100, 1000, 25, True, True)

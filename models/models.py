@@ -190,7 +190,7 @@ class Reward(nn.Module):
     def forward(self, inputs):
         x = inputs
         x = self.linear1(x)
-        x = torch.clip(x, -10, 10)
+        x = torch.clip(x, -20, 20)
         # x = torch.tanh(x)
         # x = torch.sigmoid(x)
 
@@ -212,7 +212,8 @@ class INTRINSIC_REWARD:
         if self.prior_reward != None:
             non_zero_idx = state_action.nonzero()[:,1]
             prior_r = self.prior_reward[non_zero_idx].view(-1,1)
-            # print(prior_r.size(), r.size())
+            # prior_r = torch.cumsum(prior_r, dim=0)
+
             r += prior_r
 
         # non_zero_idx = state_action.nonzero()[:,1]
@@ -259,5 +260,5 @@ class INTRINSIC_GAMMA:
     def get_gamma(self, state):
         gamma = self.model(state)
         # TODO: (o___o)
-        gamma = torch.full_like(gamma,0.9) # TODO: REMOVE THISSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSs
+        gamma = torch.full_like(gamma,0.5) # TODO: REMOVE THISSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSs
         return gamma
