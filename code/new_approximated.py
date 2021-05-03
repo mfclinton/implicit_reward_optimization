@@ -16,6 +16,7 @@ import pandas as pd
 # Memory Leak
 import gc
 import random
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 
@@ -53,17 +54,67 @@ def Get_Trajectory(env, agent):
     return states, torch.tensor(actions), torch.tensor(rewards), log_probs
 
 # Make this better
-def Get_Prior_Reward(env):
+def Get_Prior_Reward(env, prior_id):
+    reformat_prior = False
+
     # Run to right
-    reward_1 = torch.full((env.action_space.n * env.state_space.n,), -1.)
-    reward_1[env.state_space.n * 3:] = 1.0
+    if prior_id == 0:
+        reward_1 = torch.full((env.action_space.n * env.state_space.n,), -1.)
+        reward_1[env.state_space.n * 3:] = 1.0
+        print(reward_1)
+    elif prior_id == 1:
+        # MANHATTEN
+        h, w = env._grid_dims
+        reward_1 = torch.zeros((env.action_space.n * env.state_space.n,))
+        
+        for y in range(h):
+            for x in range(w):
+                state = y * h + x
+                for action in range(env.action_space.n):
+                    new_x = x
+                    new_y = y
+                    if action == 0:  # move up
+                        new_y = y - 1
+                    elif action == 1:  # move down
+                        new_y = y + 1
+                    elif action == 2:  # move left
+                        new_x = x - 1
+                    elif action == 3:  # move right
+                        new_x = x + 1
+                    
+                    reward_1[state * 4 + action] = - (np.abs(new_x - 4) + np.abs(new_y - 4)) / 8 + (0.125 * 2)
+        
+        # reward_1 = reward_1.view(25,4)
+        # bottom_left_indexes = torch.tensor([10,11,12,15,16,17,20,21,22])
+        # reward_1[bottom_left_indexes, :] -= 2
+        # reward_1 = reward_1.view(-1)
+        
+        reformat_prior = True
+        print(reward_1.view(25,4))
+    elif prior_id == 2:
+        # Avoid bottom left
+        reward_1 = torch.zeros((env.action_space.n * env.state_space.n,)).view(25,4)
+        bottom_left_indexes = torch.tensor([10,11,12,15,16,17,20,21,22])
+        reward_1[bottom_left_indexes, :] -= 2
+        reward_1 = reward_1.view(-1)
+        reformat_prior = True
+        print(reward_1.view(25,4))
+    else:
+        return None
+
+    if(reformat_prior):
+        print("Reformated Prior")
+        reward_1 = reward_1.view(25,4)
+        reward_1 = reward_1.T.reshape(-1)
+
     return reward_1
 
 
 
 def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
-    Use_Chris_World = True
+    Use_Chris_World = False
     Save_Data = True
+    prior_id = -1
     
     env = GridWorld() # Creates Environment
     agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
@@ -73,8 +124,8 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         agent = CHRIS_REINFORCE() #TODO: remove
 
     # agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
-    in_reward = INTRINSIC_REWARD(env.state_space.n * env.action_space.n, None) #Create Intrinsic Reward Function, (S * A) --> (25) --> (1)
-    # in_reward = INTRINSIC_REWARD(env.state_space.n * env.action_space.n, Get_Prior_Reward(env)) #Create Intrinsic Reward Function, (S * A) --> (25) --> (1)
+    # in_reward = INTRINSIC_REWARD(env.state_space.n * env.action_space.n, None) #Create Intrinsic Reward Function, (S * A) --> (25) --> (1)
+    in_reward = INTRINSIC_REWARD(env.state_space.n * env.action_space.n, Get_Prior_Reward(env, prior_id)) #Create Intrinsic Reward Function, (S * A) --> (25) --> (1)
     in_gamma = INTRINSIC_GAMMA(env.state_space.n) #Creates Intrinsic Gamma (S) --> (25) --> (1)
     
     # DEBUG
@@ -262,10 +313,24 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         # print(in_rewards)
         print("Iteration ", t1)
     
+    if not Use_Chris_World:
+        print("FINAL REWARD MAP")
+        reward_map = get_full_state_reward(env, in_reward)
+        print(reward_map)
+        print(reward_map.argmax(axis=1).view(5,5))
+        if in_reward.prior_reward != None:
+            print("VISUALIZE LEARNED REWARD FUNCTION W/O PRIOR")
+            in_reward.prior_reward *= -1
+            reward_map = get_full_state_reward(env, in_reward)
+            print(reward_map)
+            print(reward_map.argmax(axis=1).view(5,5))
+            in_reward.prior_reward *= -1
+
+
 
     c_word_str = "c_word" if Use_Chris_World == True else ""
     using_prior_str = "with_prior" if in_reward.prior_reward != None else ""
-    result_path =  "saved\\reward_{0}_{1}_{2}_({3},{4},{5})_{6}_{7}\\".format(actual_reward_over_time[-1].item(), approximate, reuse_trajectories, T1, T2, T3, c_word_str, using_prior_str)
+    result_path =  "saved\\reward_{0}_{1}_{2}_({3},{4},{5})_{6}_{7}{8}\\".format(actual_reward_over_time[-1].item(), approximate, reuse_trajectories, T1, T2, T3, c_word_str, using_prior_str, prior_id)
 
     print("Actual Reward Over Time") # still need to rescale graph
     print(actual_reward_over_time)
@@ -275,7 +340,12 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
     plt.ylabel("avg reward")
 
     if Save_Data:
-        os.mkdir(result_path)
+        try:
+            os.mkdir(result_path)
+        except:
+            print("directory already exists")
+            result_path += str(random.random()) + "\\"
+            os.mkdir(result_path)
         
         torch.save(in_reward.model.state_dict(), result_path + "reward_model")
         torch.save(in_gamma.model.state_dict(), result_path + "gamma_model")
@@ -286,4 +356,4 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(10, 50, 50, True, False)
+    Run_Gridworld_Implicit(50, 500, 100, True, True)

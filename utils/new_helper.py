@@ -32,6 +32,7 @@ def Get_Cumulative_Gamma(inner_gamma):
     cumu_gamma = torch.zeros((T,T), dtype=torch.float64)
     for t in range(T):
         cumu_gamma[t,t:] = torch.cumprod(inner_gamma[t:], dim=0, dtype=torch.float64)
+        cumu_gamma[t,t] = 1 #TODO remove this
     return cumu_gamma
     # Debug Check: Make Sure Triangular
 
