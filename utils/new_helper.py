@@ -8,7 +8,7 @@ def Approximate_H(cumu_phi, inner_discounted_reward):
 
 def New_Approximate_H(phi, discounted_in_returns):
     # Debug Check: Make sure right shapes
-    return (phi * phi * discounted_in_returns.view(-1,1)).sum(axis = 0)
+    return (phi * phi * torch.abs(discounted_in_returns.view(-1,1))).sum(axis = 0)
 
 
 # <desc> phi: phi values, shape (N, len(agent_params))
@@ -17,6 +17,12 @@ def New_Approximate_H(phi, discounted_in_returns):
 # <return> returns A approximation
 def Approximate_A(phi, cumu_gamma, d_inner_reward):
     # print(phi, cumu_gamma)
+    # print(phi.size(), cumu_gamma.size(), d_inner_reward.size())
+    return (phi * torch.matmul(cumu_gamma, d_inner_reward)).sum(dim = 0)
+
+def New_Approximate_A(phi, cumu_gamma, d_inner_reward):
+    # print(phi, cumu_gamma)
+    # print(phi.size(), cumu_gamma.size(), d_inner_reward.size())
     # print(phi.size(), cumu_gamma.size(), d_inner_reward.size())
     return (phi * torch.matmul(cumu_gamma, d_inner_reward)).sum(dim = 0)
 

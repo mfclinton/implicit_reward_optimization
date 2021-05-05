@@ -5,6 +5,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import numpy as np
 from envs.Gridworld import GridWorld
 from envs.ChrisWorld import ChrisWorld
+from envs.SimpleBandit import SimpleBandit
+
 from models.models import REINFORCE, INTRINSIC_REWARD, INTRINSIC_GAMMA, CHRIS_REINFORCE
 import torch.nn.functional as F
 import torch
@@ -22,6 +24,8 @@ import matplotlib.pyplot as plt
 
 # Updates Our Trajectory Information Given A One-Step Data Sample
 def update_and_get_action(env, agent, data, states, actions, rewards, log_probs):
+    # print(data["observation"], env.state_space.n)
+    # print("LOL")
     state = onehot_state(data["observation"], env.state_space.n)
     action, log_prob = agent.select_action(state)
 
@@ -113,10 +117,11 @@ def Get_Prior_Reward(env, prior_id):
 
 def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
     Use_Chris_World = False
-    Save_Data = True
+    Save_Data = False
     prior_id = -1
     
-    env = GridWorld() # Creates Environment
+    # env = GridWorld() # Creates Environment
+    env = SimpleBandit()
     agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
 
     if Use_Chris_World:
@@ -254,7 +259,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
             if (approximate):
                 # H += Approximate_H(cumu_phi, discounted_in_rewards)
                 H += New_Approximate_H(phi, discounted_in_rewards)
-                A += Approximate_A(phi, cumu_gammas, d_in_reward)
+                A += New_Approximate_A(phi, cumu_gammas, d_in_reward)
             else:
                 pass # TODO
 
@@ -302,9 +307,9 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         print(reward_map)
         if not Use_Chris_World:
             print("--- Top Moves ---")
-            print(reward_map.argmax(axis=1).view(5,5))
+            print(reward_map.argmax(axis=1))#.view(5,5))
             print("--- Total Visited States ---")
-            print(visited_states.view(5,5))
+            print(visited_states)#.view(5,5))
         else:
             print("--- Top Moves ---")
             print(reward_map.argmax(axis=1))
@@ -322,13 +327,13 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         print("FINAL REWARD MAP")
         reward_map = get_full_state_reward(env, in_reward)
         print(reward_map)
-        print(reward_map.argmax(axis=1).view(5,5))
+        print(reward_map.argmax(axis=1))#.view(5,5))
         if in_reward.prior_reward != None:
             print("VISUALIZE LEARNED REWARD FUNCTION W/O PRIOR")
             in_reward.prior_reward *= -1
             reward_map = get_full_state_reward(env, in_reward)
             print(reward_map)
-            print(reward_map.argmax(axis=1).view(5,5))
+            print(reward_map.argmax(axis=1))#.view(5,5))
             in_reward.prior_reward *= -1
 
 
@@ -343,7 +348,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
     print(actual_reward_over_time)
     s = pd.Series(actual_reward_over_time)
     # print(s.rolling(50).mean())
-    plt.plot(s.rolling(50).mean())
+    plt.plot(s.rolling(100).mean())
     plt.ylabel("avg reward")
 
     if Save_Data:
@@ -367,4 +372,4 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(1, 500, 100, True, True)
+    Run_Gridworld_Implicit(100, 1000, 20, True, False)

@@ -212,7 +212,8 @@ class INTRINSIC_REWARD:
         if self.prior_reward != None:
             non_zero_idx = state_action.nonzero()[:,1]
             prior_r = self.prior_reward[non_zero_idx].view(-1,1)
-            # print(prior_r.size(), r.size())
+            # prior_r = torch.cumsum(prior_r, dim=0)
+
             r += prior_r
 
         # non_zero_idx = state_action.nonzero()[:,1]
