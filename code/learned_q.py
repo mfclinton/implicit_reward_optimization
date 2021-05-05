@@ -5,7 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import numpy as np
 from envs.Gridworld import GridWorld
 from envs.ChrisWorld import ChrisWorld
-from envs.Gridworld_SAS import Gridworld_SAS
+# from envs.Gridworld_SAS import Gridworld_SAS
 from models.models import REINFORCE, INTRINSIC_REWARD, INTRINSIC_GAMMA, CHRIS_REINFORCE
 import torch.nn.functional as F
 import torch
@@ -54,17 +54,68 @@ def Get_Trajectory(env, agent):
     return states, torch.tensor(actions), torch.tensor(rewards), log_probs
 
 # Make this better
-def Get_Prior_Reward(env):
+# Make this better
+def Get_Prior_Reward(env, prior_id):
+    reformat_prior = False
+
     # Run to right
-    reward_1 = torch.full((env.action_space.n * env.state_space.n,), -1.)
-    reward_1[env.state_space.n * 3:] = 1.0
+    if prior_id == 0:
+        reward_1 = torch.full((env.action_space.n * env.state_space.n,), -1.)
+        reward_1[env.state_space.n * 3:] = 1.0
+        print(reward_1)
+    elif prior_id == 1:
+        # MANHATTEN
+        h, w = env._grid_dims
+        reward_1 = torch.zeros((env.action_space.n * env.state_space.n,))
+        
+        for y in range(h):
+            for x in range(w):
+                state = y * h + x
+                for action in range(env.action_space.n):
+                    new_x = x
+                    new_y = y
+                    if action == 0:  # move up
+                        new_y = y - 1
+                    elif action == 1:  # move down
+                        new_y = y + 1
+                    elif action == 2:  # move left
+                        new_x = x - 1
+                    elif action == 3:  # move right
+                        new_x = x + 1
+                    
+                    reward_1[state * 4 + action] = - (np.abs(new_x - 4) + np.abs(new_y - 4)) / 8 + (0.125 * 2)
+        
+        # reward_1 = reward_1.view(25,4)
+        # bottom_left_indexes = torch.tensor([10,11,12,15,16,17,20,21,22])
+        # reward_1[bottom_left_indexes, :] -= 2
+        # reward_1 = reward_1.view(-1)
+        
+        reformat_prior = True
+        print(reward_1.view(25,4))
+    elif prior_id == 2:
+        # Avoid bottom left
+        reward_1 = torch.zeros((env.action_space.n * env.state_space.n,)).view(25,4)
+        bottom_left_indexes = torch.tensor([10,11,12,15,16,17,20,21,22])
+        reward_1[bottom_left_indexes, :] -= 2
+        reward_1 = reward_1.view(-1)
+        reformat_prior = True
+        print(reward_1.view(25,4))
+    else:
+        return None
+
+    if(reformat_prior):
+        print("Reformated Prior")
+        reward_1 = reward_1.view(25,4)
+        reward_1 = reward_1.T.reshape(-1)
+
     return reward_1
 
 
 
 def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
     Use_Chris_World = False
-    Save_Data = True
+    Save_Data = False
+    prior_id = 1
     
     # env = Gridworld_SAS()
     env = GridWorld() # Creates Environment
@@ -75,8 +126,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         agent = CHRIS_REINFORCE() #TODO: remove
 
     # agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
-    in_reward = INTRINSIC_REWARD(env.state_space.n * env.action_space.n, None) #Create Intrinsic Reward Function, (S * A) --> (25) --> (1)
-    # in_reward = INTRINSIC_REWARD(env.state_space.n * env.action_space.n, Get_Prior_Reward(env)) #Create Intrinsic Reward Function, (S * A) --> (25) --> (1)
+    in_reward = INTRINSIC_REWARD(env.state_space.n * env.action_space.n, Get_Prior_Reward(env, prior_id)) #Create Intrinsic Reward Function, (S * A) --> (25) --> (1)    # in_reward = INTRINSIC_REWARD(env.state_space.n * env.action_space.n, Get_Prior_Reward(env)) #Create Intrinsic Reward Function, (S * A) --> (25) --> (1)
     in_gamma = INTRINSIC_GAMMA(env.state_space.n) #Creates Intrinsic Gamma (S) --> (25) --> (1)
     
     # DEBUG
@@ -275,4 +325,4 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(200, 125, 20, True, True)
+    Run_Gridworld_Implicit(10, 125, 20, True, True)

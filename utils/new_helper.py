@@ -6,6 +6,11 @@ def Approximate_H(cumu_phi, inner_discounted_reward):
     # Debug Check: Make sure right shapes
     return ((cumu_phi * cumu_phi).T * inner_discounted_reward).T.sum(axis = 0)
 
+def New_Approximate_H(phi, discounted_in_returns):
+    # Debug Check: Make sure right shapes
+    return (phi * phi * discounted_in_returns.view(-1,1)).sum(axis = 0)
+
+
 # <desc> phi: phi values, shape (N, len(agent_params))
 # <desc> cumu_gamma: multiplied together intrinsic gamma values, shape (N,N) is triangular)
 # <desc> d_inner_reward: the derivative of the intrinsic reward parameters, shape (N,len(reward_fn_params)))
@@ -20,6 +25,11 @@ def Approximate_A(phi, cumu_gamma, d_inner_reward):
 # <return> returns c
 def Calculate_C(cumu_phi, real_rewards):
     return (cumu_phi.T * real_rewards).T.sum(dim=0)
+
+def New_Calculate_C(phi, cumu_gammas, discounted_returns):
+    # print(phi.size(), cumu_gammas.size(), discounted_returns.size())
+    return (phi * cumu_gammas[0,:].view(-1,1) * discounted_returns.view(-1,1)).sum(dim=0)
+
 
 # TODO: CHECK THIS
 # def Calculate_B()
