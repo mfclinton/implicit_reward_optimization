@@ -5,6 +5,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import numpy as np
 from envs.Gridworld import GridWorld
 from envs.ChrisWorld import ChrisWorld
+from envs.SimpleBandit import SimpleBandit
+
 # from envs.Gridworld_SAS import Gridworld_SAS
 from models.models import REINFORCE, INTRINSIC_REWARD, INTRINSIC_GAMMA, CHRIS_REINFORCE
 import torch.nn.functional as F
@@ -115,10 +117,11 @@ def Get_Prior_Reward(env, prior_id):
 def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
     Use_Chris_World = False
     Save_Data = False
-    prior_id = 1
+    prior_id = -1
     
     # env = Gridworld_SAS()
-    env = GridWorld() # Creates Environment
+    # env = GridWorld() # Creates Environment
+    env = SimpleBandit()
     agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
 
     if Use_Chris_World:
@@ -285,9 +288,9 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         print(reward_map)
         if not Use_Chris_World:
             print("--- Top Moves ---")
-            print(reward_map.argmax(axis=1).view(5,5))
+            print(reward_map.argmax(axis=1))#.view(5,5))
             print("--- Total Visited States ---")
-            print(visited_states.view(5,5))
+            print(visited_states)#.view(5,5))
         else:
             print("--- Top Moves ---")
             print(reward_map.argmax(axis=1))
@@ -325,4 +328,4 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(10, 125, 20, True, True)
+    Run_Gridworld_Implicit(100, 1000, 20, True, True)
