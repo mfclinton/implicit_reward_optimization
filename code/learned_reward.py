@@ -117,10 +117,10 @@ def Get_Prior_Reward(env, prior_id):
 def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
     Use_Chris_World = False
     Save_Data = False
-    prior_id = -1
+    prior_id = 1
     
-    # env = GridWorld() # Creates Environment
-    env = SimpleBandit()
+    env = GridWorld() # Creates Environment
+    # env = SimpleBandit()
     agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
 
     if Use_Chris_World:
@@ -303,9 +303,9 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         print(reward_map)
         if not Use_Chris_World:
             print("--- Top Moves ---")
-            print(reward_map.argmax(axis=1))#.view(5,5))
+            print(reward_map.argmax(axis=1).view(5,5))
             print("--- Total Visited States ---")
-            print(visited_states)#.view(5,5))
+            print(visited_states.view(5,5))
         else:
             print("--- Top Moves ---")
             print(reward_map.argmax(axis=1))
@@ -323,13 +323,13 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         print("FINAL REWARD MAP")
         reward_map = get_full_state_reward(env, in_reward)
         print(reward_map)
-        print(reward_map.argmax(axis=1))#.view(5,5))
+        print(reward_map.argmax(axis=1).view(5,5))
         if in_reward.prior_reward != None:
             print("VISUALIZE LEARNED REWARD FUNCTION W/O PRIOR")
             in_reward.prior_reward *= -1
             reward_map = get_full_state_reward(env, in_reward)
             print(reward_map)
-            print(reward_map.argmax(axis=1))#.view(5,5))
+            print(reward_map.argmax(axis=1).view(5,5))
             in_reward.prior_reward *= -1
 
 
@@ -342,7 +342,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
     print(actual_reward_over_time)
     s = pd.Series(actual_reward_over_time)
     # print(s.rolling(50).mean())
-    plt.plot(s.rolling(50).mean())
+    plt.plot(s.rolling(10).mean())
     plt.ylabel("avg reward")
 
     if Save_Data:
@@ -362,4 +362,6 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(100, 1000, 25, True, True)
+    torch.manual_seed(0)
+    np.random.seed(0)
+    Run_Gridworld_Implicit(25, 1000, 10, True, True)

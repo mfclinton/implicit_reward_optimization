@@ -33,8 +33,9 @@ def Calculate_C(cumu_phi, real_rewards):
     return (cumu_phi.T * real_rewards).T.sum(dim=0)
 
 def New_Calculate_C(phi, cumu_gammas, discounted_returns):
-    # print(phi.size(), cumu_gammas.size(), discounted_returns.size())
+    print(phi.size(), cumu_gammas.size(), discounted_returns.size())
     return (phi * cumu_gammas[0,:].view(-1,1) * discounted_returns.view(-1,1)).sum(dim=0)
+    # return (phi * discounted_returns.view(-1,1)).sum(dim=0)
 
 
 # TODO: CHECK THIS

@@ -120,8 +120,8 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
     Save_Data = False
     prior_id = -1
     
-    # env = GridWorld() # Creates Environment
-    env = SimpleBandit()
+    env = GridWorld() # Creates Environment
+    # env = SimpleBandit()
     agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
 
     if Use_Chris_World:
@@ -139,7 +139,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
     for t1 in range(T1):
         # TODO: Can we keep the same agent across iterations?
         # agent = REINFORCE(env.state_space.n, env.action_space)
-        agent.reset()
+        agent.reset() ### Might not be necessary, can slow down learning
         for t2 in range(T2):
             # Get Trajectory returns lists of elements with the following dims
             # States, (S,)
@@ -152,7 +152,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
             else:
                 # Skip T2 Loop if no Trajectories
                 if(len(trajectories) == 0):
-                    break
+                    break ### How to manage first few trajectories , can cause issues with graph representation
 
                 states, actions, real_rewards, log_probs = random.choice(trajectories)
                 # states, actions, real_rewards = random.choice(trajectories)
@@ -164,7 +164,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
             if reuse_trajectories:
                 probs = agent.model(states_matrix)
                 sampler = Categorical(probs)
-                log_probs = sampler.log_prob(actions)
+                log_probs = sampler.log_prob(actions) ### Store Log Probs or Recalculate
 
             # Creates a State Action matrix of size (time_steps, S * A)
             state_actions = onehot_states_to_state_action(states_matrix, actions, env.action_space.n)
@@ -201,7 +201,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         for t3 in range(T3):
             #Same as before
             states, actions, real_rewards, log_probs = Get_Trajectory(env, agent) #Samples a trajectory
-            if reuse_trajectories:
+            if reuse_trajectories: ## Might want to be in the form of D2 (see paper)
                 trajectories.append((states, actions, real_rewards, log_probs))
                 # trajectories.append((states, actions, real_rewards))
 
@@ -253,6 +253,8 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
             # c += (cumu_phi.T * real_rewards).T.sum(axis=0)
             discounted_returns = Get_Discounted_Returns(real_rewards, cumu_gammas, normalize=False)
             c += New_Calculate_C(phi, cumu_gammas, discounted_returns)
+            # print(c)
+            # print(cumu_gammas[0,:].view(-1,1) * discounted_returns.view(-1,1))
             # b += cumu_phi * in_gammas * d_in_gamma * ( - log_probs)
             # b += Calculate_B()
 
@@ -276,10 +278,14 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
             H += torch.diag(torch.full((H.size()[0],),1e-10))
         else:
             H += 1e-10
-        
+
         c /= T3
         H /= T3
         A /= T3
+
+        print(c)
+        print(H)
+        print(A)
 
         # TODO: Check, Sign of Gradient in Paper Is For Update
         d_in_reward_params = None
@@ -307,9 +313,9 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         print(reward_map)
         if not Use_Chris_World:
             print("--- Top Moves ---")
-            print(reward_map.argmax(axis=1))#.view(5,5))
+            print(reward_map.argmax(axis=1).view(5,5))
             print("--- Total Visited States ---")
-            print(visited_states)#.view(5,5))
+            print(visited_states.view(5,5))
         else:
             print("--- Top Moves ---")
             print(reward_map.argmax(axis=1))
@@ -327,13 +333,13 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         print("FINAL REWARD MAP")
         reward_map = get_full_state_reward(env, in_reward)
         print(reward_map)
-        print(reward_map.argmax(axis=1))#.view(5,5))
+        print(reward_map.argmax(axis=1).view(5,5))
         if in_reward.prior_reward != None:
             print("VISUALIZE LEARNED REWARD FUNCTION W/O PRIOR")
             in_reward.prior_reward *= -1
             reward_map = get_full_state_reward(env, in_reward)
             print(reward_map)
-            print(reward_map.argmax(axis=1))#.view(5,5))
+            print(reward_map.argmax(axis=1).view(5,5))
             in_reward.prior_reward *= -1
 
 
@@ -348,7 +354,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
     print(actual_reward_over_time)
     s = pd.Series(actual_reward_over_time)
     # print(s.rolling(50).mean())
-    plt.plot(s.rolling(100).mean())
+    plt.plot(s.rolling(15).mean())
     plt.ylabel("avg reward")
 
     if Save_Data:
@@ -372,4 +378,6 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    Run_Gridworld_Implicit(100, 1000, 25, True, True)
+    torch.manual_seed(0)
+    np.random.seed(0)
+    Run_Gridworld_Implicit(10, 1000, 10, True, True)

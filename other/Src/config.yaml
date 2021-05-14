@@ -1,3 +1,4 @@
 agent:
   onehot_basis: True
-  
+env:
+  name: Gridworld_SAS.py
