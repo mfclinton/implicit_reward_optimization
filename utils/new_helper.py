@@ -24,6 +24,8 @@ def New_Approximate_A(phi, cumu_gamma, d_inner_reward):
     # print(phi, cumu_gamma)
     # print(phi.size(), cumu_gamma.size(), d_inner_reward.size())
     # print(phi.size(), cumu_gamma.size(), d_inner_reward.size())
+
+    # # DOUBLE CHECK THAT APPROXIMATION IS RIGHT
     return (phi * torch.matmul(cumu_gamma, d_inner_reward)).sum(dim = 0)
 
 # <desc> cumu_phi: cumulative phi values, shape (N, len(agent_params))
@@ -34,7 +36,14 @@ def Calculate_C(cumu_phi, real_rewards):
 
 def New_Calculate_C(phi, cumu_gammas, discounted_returns):
     print(phi.size(), cumu_gammas.size(), discounted_returns.size())
-    return (phi * cumu_gammas[0,:].view(-1,1) * discounted_returns.view(-1,1)).sum(dim=0)
+    # print(phi, cumu_gammas[0,:])
+    # print(phi * cumu_gammas[0,:].view(-1,1))
+    input()
+    ## Double check, should this just direct multiplication. Why [0,:]?
+    return (phi * cumu_gammas * discounted_returns.view(-1,1)).sum(dim=0)
+
+    # return (phi * cumu_gammas[0,:].view(-1,1) * discounted_returns.view(-1,1)).sum(dim=0)
+    
     # return (phi * discounted_returns.view(-1,1)).sum(dim=0)
 
 

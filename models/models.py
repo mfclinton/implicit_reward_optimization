@@ -13,6 +13,9 @@ from torch.distributions import Categorical
 from utils.new_helper import *
 import time
 
+# CAN IMPLEMENT MODELS AS [STATE] --> [ACTION]
+# NO NEED FOR STATE ACTION VEC
+
 # 
 # POLICY MODELS
 # 
@@ -260,5 +263,5 @@ class INTRINSIC_GAMMA:
     def get_gamma(self, state):
         gamma = self.model(state)
         # TODO: (o___o)
-        gamma = torch.full_like(gamma,0) # TODO: REMOVE THISSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSs
+        gamma = torch.full_like(gamma,.9) # TODO: REMOVE THISSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSs
         return gamma
