@@ -5,7 +5,7 @@ from matplotlib.ticker import NullLocator
 import torch
 import numpy as np
 from gym import error, spaces, utils
-from gym.spaces import Discrete
+from gym.spaces import Discrete, Box
 
 
 class Gridworld_687(object):
@@ -14,9 +14,12 @@ class Gridworld_687(object):
         self.action_prob = action_prob
         self.randomness = 1 - action_prob
         self.n_actions = 4
-        self.n_observations = 25
+
+        self.n_observations = 25 #TODO CHECK THIS
+        self.width = np.sqrt(self.n_observations).astype(np.int32)
+
         self.action_space = Discrete(self.n_actions)
-        self.observation_space = Discrete(25)
+        self.observation_space = Box(low=np.zeros(2, dtype=np.int32), high=np.full(2, self.width, dtype=np.int32), dtype=np.int32)
         self._n_episodes = 0
 
         self.max_steps = max_steps
@@ -28,9 +31,6 @@ class Gridworld_687(object):
 
         self.collision_reward = 0
         self.movement_reward = 0
-        
-        # Gridworld Specific
-        self.width = np.sqrt(self.n_observations).astype(np.int32)
 
         self.static_obstacles = self.get_static_obstacles()
 

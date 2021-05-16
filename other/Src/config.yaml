@@ -1,4 +1,13 @@
-agent:
-  onehot_basis: True
-env:
-  name: Gridworld_687
+config:
+  _target_: Src.run.Config
+  env:
+    _target_: Environments.Gridworld_687.Gridworld_687
+  agent:
+    _target_: Src.Algorithms.Agent.Reinforce.Reinforce
+  reward_func:
+    _target_: Src.Algorithms.Reward.RewardFunc.RewardFunc
+  gamma_func:
+    _target_: Src.Algorithms.Gamma.GammaFunc.GammaFunc
+  offpolicy: True
+  max_episodes: 50
+  
