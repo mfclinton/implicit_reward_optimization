@@ -123,10 +123,12 @@ class Gridworld_687(object):
     def step(self, action):
         assert self.valid_actions[action]
 
+        print(self.steps_taken)
         self.steps_taken += 1
         reward = 0
 
         term = self.is_terminal()
+        print(term)
         if term:
             return self.curr_state, 0, self.valid_actions, term, {'No INFO implemented yet'}
 

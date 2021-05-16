@@ -2,8 +2,11 @@ config:
   _target_: Src.run.Config
   env:
     _target_: Environments.Gridworld_687.Gridworld_687
+    debug: False
   agent:
     _target_: Src.Algorithms.Agent.Reinforce.Reinforce
+    buffer_size: 100
+    batch_size: 20
     basis:
       _target_: Src.Utils.Basis.OneHot_Basis
   reward_func:

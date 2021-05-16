@@ -44,7 +44,8 @@ class Solver:
             try:
                 print(f"Initializing {attr}")
                 obj.init(self.config)
-            except: pass
+            except Exception as err:
+                print(err)
 
     # Resets everything and return state and valid actions
     def reset(self):
@@ -58,6 +59,8 @@ class Solver:
     
     def train(self):
         agent = self.config.agent
+        env = self.config.env
+
 
         returns = []
         rewards = []
@@ -69,21 +72,26 @@ class Solver:
         for episode in range(start_ep, self.config.max_episodes):
             state, valid_actions = self.reset()
 
-            step = 0
+            step, total_r = 0, 0
             done = False
             while not done:
                 # get action
                 action, extra_info, dist = agent.get_action(state)
-                print(action)
                 # take step
+                new_state, reward, valid_actions, done, info = env.step(action=action)
                 # update agent
+                print(step, "step")
+                agent.update(state, action, extra_info, reward, new_state, valid_actions, done)
+                
+                # TODO
                 # update state
+                state = new_state
 
                 # intra episode stats
                 # add r
+                total_r += reward
                 step += 1
-                # break if exceed max steps, check env
-            
+            print("End Episode")
             steps += step
 
             if episode == self.config.max_episodes - 1:
