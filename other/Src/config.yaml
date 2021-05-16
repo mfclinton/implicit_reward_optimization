@@ -4,6 +4,8 @@ config:
     _target_: Environments.Gridworld_687.Gridworld_687
   agent:
     _target_: Src.Algorithms.Agent.Reinforce.Reinforce
+    basis:
+      _target_: Src.Utils.Basis.OneHot_Basis
   reward_func:
     _target_: Src.Algorithms.Reward.RewardFunc.RewardFunc
   gamma_func:
