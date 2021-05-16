@@ -1,6 +1,8 @@
 import numpy as np
 import torch
 from Src.Algorithms.Agent.Agent import Agent
+from Src.Utils.Policy import Categorical
+from Src.Utils.utils import TrajectoryBuffer
 
 class Reinforce(Agent):
     def __init__(self, basis):
@@ -8,31 +10,33 @@ class Reinforce(Agent):
         self.state_features = basis
     
     def init(self, config):
-        self.state_features.init()
+        print('~~~~~~~~~~~~~~~~')
+        self.state_features.init(config)
+        print("TROLL")
+        print(self.state_features.feature_dim)
+        self.policy = Categorical(self.state_features.feature_dim, config, action_dim=None)
+        # self.memory = TrajectoryBuffer()
+        self.counter = 0
 
         self.initialized = True
         # TODO
 
     def reset(self):
         super(Reinforce, self).reset()
+        self.counter += 1
         # TODO
     
     # gets the action for the state
     def get_action(self, state):
-        state = torch.Tensor(state, requires_grad=False)
+        state = torch.tensor(state, requires_grad=False)
         state = self.state_features.forward(state.view(1, -1))
-        # TODO
-        # action, prob, dist = self.actor.get_action_w_prob_dist(state)
-
-
-
-        # if self.config.debug:
-        #     self.track_entropy(dist, action)
+        action, prob, dist = self.policy.get_action_w_prob_dist(state)
 
         return action, prob, dist
 
     # Updates Batch Episode History
     def update(self, s1, a1, prob, done):
+        # TODO
         self.memory.add(s1, a1, prob)
 
         if done:

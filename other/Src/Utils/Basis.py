@@ -13,26 +13,26 @@ class Basis(nn.Module):
         super(Basis, self).__init__()
         self.initialized = False
 
-    def init(self, config, env):
+    def init(self, config):
         self.initialized = True
-        self.state_low = tensor(env.observation_space.low, dtype=float32, requires_grad=False, device=config.device)
-        self.state_high = tensor(env.observation_space.high, dtype=float32, requires_grad=False, device=config.device)
+        # self.state_low = tensor(env.observation_space.low, dtype=float32, requires_grad=False)
+        # self.state_high = tensor(env.observation_space.high, dtype=float32, requires_grad=False)
 
 # Designed for Discrete Grids
 class OneHot_Basis(Basis):
     def __init__(self):
         super(OneHot_Basis, self).__init__()
-        self.initialized = False
 
-    def init(self, config, env):
-        super(OneHot_Basis, self).init(config, env)
-        self.initialized = True
+    def init(self, config):
+        env = config.env
+        super(OneHot_Basis, self).init(config)
         assert np.issubdtype(env.observation_space.dtype, np.integer)
 
         self.feature_dim = env.n_observations
         self.width = env.width
 
     def forward(self, state):
+        state = state[0]
         idx = state[0] + self.width * state[1]
         output = torch.zeros(self.feature_dim)
         output[idx] = 1

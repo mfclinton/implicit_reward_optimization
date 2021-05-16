@@ -1,31 +1,23 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+import numpy as np
 
-class Network(nn.Module):
-    def __init__(self, num_inputs, num_outputs, config):
-        super(Network, self).__init__()
-        self.initialized = False
-
-    def init(self, num_inputs, num_outputs, config):
-        self.initialized = True
-
+class Policy(nn.Module):
+    def __init__(self, state_dim, config, action_dim=None):
+        super(Policy, self).__init__()
         self.config = config
+        self.state_dim = state_dim
+        self.action_dim = config.env.action_space.n
 
-        self.num_inputs = num_inputs
-        self.num_outputs = num_outputs
-
-        #  TODO define model and optim
-
-class Categorical(Network):
+class Categorical(Policy):
     def __init__(self, state_dim, config, action_dim=None):
         super(Categorical, self).__init__(state_dim, config)
-
         # overrides the action dim variable defined by super-class
         if action_dim is not None:
             self.action_dim = action_dim
 
         self.fc1 = nn.Linear(self.state_dim, self.action_dim)
-        self.init()
 
     def re_init_optim(self):
         # TODO

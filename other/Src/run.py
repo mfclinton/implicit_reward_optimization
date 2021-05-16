@@ -1,4 +1,5 @@
 #!~miniconda3/envs/rl/bin python
+from logging import config
 import hydra
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
@@ -56,6 +57,8 @@ class Solver:
         return state, valid_actions
     
     def train(self):
+        agent = self.config.agent
+
         returns = []
         rewards = []
 
@@ -70,6 +73,8 @@ class Solver:
             done = False
             while not done:
                 # get action
+                action, extra_info, dist = agent.get_action(state)
+                print(action)
                 # take step
                 # update agent
                 # update state
