@@ -80,7 +80,7 @@ class Solver:
                 # take step
                 new_state, reward, valid_actions, done, info = env.step(action=action)
                 # update agent
-                print(step, "step")
+
                 agent.update(state, action, extra_info, reward, new_state, valid_actions, done)
                 
                 # TODO

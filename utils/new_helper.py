@@ -8,7 +8,7 @@ def Approximate_H(cumu_phi, inner_discounted_reward):
 
 def New_Approximate_H(phi, discounted_in_returns):
     # Debug Check: Make sure right shapes
-    return (phi * phi * torch.abs(discounted_in_returns.view(-1,1))).sum(axis = 0)
+    return ((phi * phi) * torch.abs(discounted_in_returns.view(-1,1))).sum(axis = 0)
 
 
 # <desc> phi: phi values, shape (N, len(agent_params))
@@ -35,12 +35,11 @@ def Calculate_C(cumu_phi, real_rewards):
     return (cumu_phi.T * real_rewards).T.sum(dim=0)
 
 def New_Calculate_C(phi, cumu_gammas, discounted_returns):
-    print(phi.size(), cumu_gammas.size(), discounted_returns.size())
+    # print(phi.size(), cumu_gammas.size(), discounted_returns.size())
     # print(phi, cumu_gammas[0,:])
     # print(phi * cumu_gammas[0,:].view(-1,1))
-    input()
     ## Double check, should this just direct multiplication. Why [0,:]?
-    return (phi * cumu_gammas * discounted_returns.view(-1,1)).sum(dim=0)
+    return (torch.mm(cumu_gammas, phi) * discounted_returns.view(-1,1)).sum(dim=0)
 
     # return (phi * cumu_gammas[0,:].view(-1,1) * discounted_returns.view(-1,1)).sum(dim=0)
     
@@ -48,7 +47,14 @@ def New_Calculate_C(phi, cumu_gammas, discounted_returns):
 
 
 # TODO: CHECK THIS
-# def Calculate_B()
+def Calculate_B(phi, d_gammas, inner_reward):
+    B = 0
+    for j in range(phi.shape[0]):
+        # print(inner_reward[j:].view(-1,1))
+        r_term = (torch.cumprod(d_gammas[j:,:],dim=0) * inner_reward[j:].view(-1,1)).sum(dim=0)
+        # print(phi.shape, inner_reward.shape, d_gammas.shape)
+        B += phi[j,:] * r_term
+    return B
 
 # <desc> inner_gamma: intrinsic gamma values, shape (N,))
 # <returns> cumu_gamma, cumulative sum of gamma starting from the row index, shape (N, N)

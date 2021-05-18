@@ -33,7 +33,7 @@ class OneHot_Basis(Basis):
 
     def forward(self, state):
         state = state[0]
-        idx = state[0] + self.width * state[1]
+        idx = (state[0] + self.width * state[1]).int() #TODO do better
         output = torch.zeros(self.feature_dim)
         output[idx] = 1
         return output

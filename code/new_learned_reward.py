@@ -118,7 +118,7 @@ def Get_Prior_Reward(env, prior_id):
 def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
     Use_Chris_World = False
     Save_Data = False
-    prior_id = -1
+    prior_id = 1
     
     env = GridWorld() # Creates Environment
     # env = SimpleBandit()
@@ -131,7 +131,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
     # agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
     # in_reward = INTRINSIC_REWARD(env.state_space.n * env.action_space.n, None) #Create Intrinsic Reward Function, (S * A) --> (25) --> (1)
     in_reward = INTRINSIC_REWARD(env.state_space.n * env.action_space.n, Get_Prior_Reward(env, prior_id)) #Create Intrinsic Reward Function, (S * A) --> (25) --> (1)
-    in_gamma = INTRINSIC_GAMMA(env.state_space.n) #Creates Intrinsic Gamma (S) --> (25) --> (1)
+    in_gamma = INTRINSIC_GAMMA(env.state_space.n * env.action_space.n) #Creates Intrinsic Gamma (S) --> (25) --> (1)
     
     # DEBUG
     actual_reward_over_time = []
@@ -171,7 +171,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
 
             # Evaluates intrinsic reward and gamma
             in_rewards = in_reward.get_reward(state_actions).squeeze() #(time_steps, S*A) --> (time_steps, 1)
-            in_gammas = in_gamma.get_gamma(states_matrix).squeeze() #(time_steps, S) --> (time_steps, 1)
+            in_gammas = in_gamma.get_gamma(state_actions).squeeze() #(time_steps, S) --> (time_steps, 1)
             
             # cumu_gammas = get_cumulative_multiply_front(in_gammas)
             cumu_gammas = Get_Cumulative_Gamma(in_gammas)
@@ -191,12 +191,57 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         c = 0
         H = 0
         A = 0
+        B = 0
+
+
 
         # Debugging
         total_steps = 0
         total_average_actual_reward = 0
         total_average_intrinsic_reward = 0
         visited_states = torch.zeros((env.state_space.n))
+
+        for states, actions, real_rewards, log_probs in trajectories:
+            states_matrix = torch.stack(states, dim=0)
+            state_actions = onehot_states_to_state_action(states_matrix, actions, env.action_space.n)
+
+            probs = agent.model(states_matrix)
+            sampler = Categorical(probs)
+            log_probs = sampler.log_prob(actions)
+
+            real_rewards = torch.tensor(real_rewards, requires_grad=False)
+
+            in_rewards = in_reward.get_reward(state_actions).squeeze() #(time_steps, S*A) --> (time_steps, 1)
+            # (T)
+            in_gammas = in_gamma.get_gamma(state_actions).squeeze() #(time_steps, S) --> (time_steps, 1)
+
+            cumu_gammas = Get_Cumulative_Gamma(in_gammas)    
+
+            discounted_in_rewards = Get_Discounted_Returns(in_rewards, cumu_gammas)
+
+            if(not approximate):
+                phi, d_phi = get_param_gradient(agent, log_probs, get_sec_grads = True)
+            else:
+                phi = get_param_gradient(agent, log_probs, get_sec_grads = False)
+
+            
+            d_in_reward = get_param_gradient(in_reward, in_rewards, get_sec_grads = False)
+            d_in_gamma = get_param_gradient(in_gamma, in_gammas, get_sec_grads = False)
+
+            # print(log_probs.shape, in_gammas.shape)
+            # print(phi.shape, d_in_reward.shape, d_in_gamma.shape)
+            # 1/0
+
+            if (approximate):
+                # H += Approximate_H(cumu_phi, discounted_in_rewards)
+                # print(New_Approximate_H(phi, discounted_in_rewards))
+                H += New_Approximate_H(phi, discounted_in_rewards)
+                B += Calculate_B(phi, d_in_gamma, in_rewards)
+                A += New_Approximate_A(phi, cumu_gammas, d_in_reward)
+            else:
+                1/0
+                pass # TODO
+
 
         for t3 in range(T3):
             #Same as before
@@ -215,16 +260,16 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
             
             # (T)
             in_rewards = in_reward.get_reward(state_actions).squeeze() #(time_steps, S*A) --> (time_steps, 1)
-            # (T)
-            in_gammas = in_gamma.get_gamma(states_matrix).squeeze() #(time_steps, S) --> (time_steps, 1)
+            # # (T)
+            in_gammas = in_gamma.get_gamma(state_actions).squeeze() #(time_steps, S) --> (time_steps, 1)
             
             # (T)
             # cumu_gammas = get_cumulative_multiply_front(in_gammas)
             cumu_gammas = Get_Cumulative_Gamma(in_gammas)
             
             # (T) Debug
-            # discounted_in_rewards = in_rewards * cumu_gammas[0]
-            discounted_in_rewards = Get_Discounted_Returns(in_rewards, cumu_gammas)
+            discounted_in_rewards = in_rewards * cumu_gammas[0]
+            # discounted_in_rewards = Get_Discounted_Returns(in_rewards, cumu_gammas)
 
             # BOTH (T, num_params(agent))
             if(not approximate):
@@ -243,7 +288,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
             #     cumu_d_phi = get_cumulative_sum_front(d_phi)
 
             # (T, num_params(in_reward))
-            d_in_reward = get_param_gradient(in_reward, in_rewards, get_sec_grads = False)
+            # d_in_reward = get_param_gradient(in_reward, in_rewards, get_sec_grads = False)
 
 
             # TODO: GAMMA
@@ -258,21 +303,28 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
             # b += cumu_phi * in_gammas * d_in_gamma * ( - log_probs)
             # b += Calculate_B()
 
-            if (approximate):
-                # H += Approximate_H(cumu_phi, discounted_in_rewards)
-                H += New_Approximate_H(phi, discounted_in_rewards)
-                A += New_Approximate_A(phi, cumu_gammas, d_in_reward)
-            else:
-                pass # TODO
+            # if (approximate):
+            #     # H += Approximate_H(cumu_phi, discounted_in_rewards)
+            #     H += New_Approximate_H(phi, discounted_in_rewards)
+            #     A += New_Approximate_A(phi, cumu_gammas, d_in_reward)
+            # else:
+            #     pass # TODO
 
-            T = len(states)
+
+
+
             # Debugging
+            T = len(states)
             total_steps += T
             actual_return = real_rewards.sum()
             actual_reward_over_time.append(actual_return)
             total_average_actual_reward += actual_return
             total_average_intrinsic_reward += discounted_in_rewards[0]
             visited_states += states_matrix.sum(axis=0)
+
+        if H is 0:
+            # print("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW")
+            continue
 
         if(not approximate):
             H += torch.diag(torch.full((H.size()[0],),1e-10))
@@ -283,18 +335,21 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         H /= T3
         A /= T3
 
-        print(c)
-        print(H)
-        print(A)
+        # print(c)
+        # print(H)
+        # print(A)
 
         # TODO: Check, Sign of Gradient in Paper Is For Update
         d_in_reward_params = None
+        d_in_gamma_params = None
         if(not approximate):
             d_in_reward_params = torch.matmul(c, torch.matmul(torch.inverse(H), A))
         else:
             # print(c.size(), A.size(), H.size())
+            # print(c, A, H)
             d_in_reward_params = - c * (A.squeeze() / H.squeeze()) #TODO make negative
-        print(c.shape, H.shape, A.shape, d_in_reward_params.shape, in_reward.model.linear1.weight.size())
+            d_in_gamma_params = - c * (B.squeeze() / H.squeeze())
+        # print(c.shape, H.shape, A.shape, d_in_reward_params.shape, in_reward.model.linear1.weight.size())
 
         # Hack to maintain memory, check later
         agent.optimizer.zero_grad()
@@ -305,6 +360,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         reward_map = get_full_state_reward(env, in_reward)
 
         in_reward.model.linear1.weight.grad = d_in_reward_params.unsqueeze(-1).T.detach()
+        in_gamma.model.linear1.weight.grad = d_in_gamma_params.unsqueeze(-1).T.detach()
         utils.clip_grad_norm_(in_reward.model.parameters(), 40)
         in_reward.optimizer.step()
 
@@ -333,13 +389,13 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         print("FINAL REWARD MAP")
         reward_map = get_full_state_reward(env, in_reward)
         print(reward_map)
-        print(reward_map.argmax(axis=1).view(5,5))
+        # print(reward_map.argmax(axis=1).view(5,5))
         if in_reward.prior_reward != None:
             print("VISUALIZE LEARNED REWARD FUNCTION W/O PRIOR")
             in_reward.prior_reward *= -1
             reward_map = get_full_state_reward(env, in_reward)
             print(reward_map)
-            print(reward_map.argmax(axis=1).view(5,5))
+            # print(reward_map.argmax(axis=1).view(5,5))
             in_reward.prior_reward *= -1
 
 
@@ -354,7 +410,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
     print(actual_reward_over_time)
     s = pd.Series(actual_reward_over_time)
     # print(s.rolling(50).mean())
-    plt.plot(s.rolling(15).mean())
+    plt.plot(s.rolling(5).mean())
     plt.ylabel("avg reward")
 
     if Save_Data:
@@ -380,4 +436,4 @@ if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
     torch.manual_seed(0)
     np.random.seed(0)
-    Run_Gridworld_Implicit(10, 1000, 10, True, True)
+    Run_Gridworld_Implicit(15, 50, 5, True, True)

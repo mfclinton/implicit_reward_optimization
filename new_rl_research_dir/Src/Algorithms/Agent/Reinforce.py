@@ -19,8 +19,12 @@ class Reinforce(Agent):
         self.memory = TrajectoryBuffer(self.buffer_size, self.state_dim, self.action_dim, config)
         self.counter = 0
 
+        # TEMP TODO
+        self.optim = torch.optim.Adam(self.policy.parameters(), lr=.001)
+
         self.initialized = True
         # TODO
+        # TODOOOO
 
     def reset(self):
         super(Reinforce, self).reset()
@@ -46,4 +50,28 @@ class Reinforce(Agent):
     # Optimize Agent
     def optimize(self):
         batch_size = self.memory.size if self.memory.size < self.batch_size else self.batch_size
+        s, a, prob, r = self.memory.sample(batch_size)
+
+        B, H, D = s.shape
+        _, _, A = a.shape
+
+        s_feature = self.state_features.forward(s.view(B * H, D)) 
+
+        log_pi, dist_all = self.policy.get_logprob_dist(s_feature, a.view(B * H, -1))     # (BxH)xd, (BxH)xA
+        log_pi = log_pi.view(B, H)                                                       # (BxH)x1 -> BxH
+        pi_a = torch.exp(log_pi)
+
+        returns = r
+        for i in range(H-2, -1, -1):
+            returns[:, i] += returns[:, i+1]
+
+        loss = 0
+        log_pi_return = torch.sum(log_pi * returns, dim=-1, keepdim=True)
+        loss += - 1.0 * torch.sum(log_pi_return)   
+
+        self.optim.zero_grad()  
+        loss.backward()
+        self.optim.step()
+
+        self.optim
         

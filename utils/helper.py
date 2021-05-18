@@ -63,7 +63,7 @@ def get_param_gradient(model, values, get_sec_grads = False):
     for v in values:
         # Gets the gradient of values w/ respect to model params
         # (num_parameters(model))
-        param_grads = torch.autograd.grad(v, model.model.parameters(), create_graph=get_sec_grads, retain_graph=True)
+        param_grads = torch.autograd.grad(v, model.model.parameters(), create_graph=get_sec_grads, retain_graph=True) #TODO: FIX ALLOW UNUSED
         d_v = torch.cat([torch.flatten(grad) for grad in param_grads], dim=0)
         grads.append(d_v)
 
@@ -71,7 +71,7 @@ def get_param_gradient(model, values, get_sec_grads = False):
         if(get_sec_grads):
             dd_v = torch.zeros((d_v.size()[0], d_v.size()[0]))
             for row, d in enumerate(d_v):
-                d_param_grads = torch.autograd.grad(d, model.model.parameters(), retain_graph=True)
+                d_param_grads = torch.autograd.grad(d, model.model.parameters(), retain_graph=True) #TODO: FIX ALLOW UNUSED
                 dd_v_row = torch.cat([torch.flatten(d_grad) for d_grad in d_param_grads], dim=0)
                 dd_v[row] = dd_v_row
             sec_grads.append(dd_v)

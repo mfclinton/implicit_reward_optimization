@@ -242,7 +242,7 @@ if __name__=="__main__":
     np.random.seed(0)
     rewards_list = []
     env = Gridworld_687(debug=True)
-    for i in range(50):
+    for i in range(1000):
         rewards = 0
         done = False
         _, valid = env.reset()

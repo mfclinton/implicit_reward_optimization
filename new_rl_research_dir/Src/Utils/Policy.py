@@ -42,6 +42,10 @@ class Categorical(Policy):
         return dist.gather(1, action), dist
 
     def get_logprob_dist(self, state, action):
+        action = action.long() #TODO: do better
+        print(action)
         x = self.forward(state)                                                              # BxA
-        log_dist = F.log_softmax(x, -1)                                                      # BxA
+        log_dist = F.log_softmax(x, -1)
+        print(log_dist.size(), action.size()) 
+        print(torch.gather(log_dist, 1, action))                                                    # BxA
         return log_dist.gather(1, action), log_dist                                          # BxAx(Bx1) -> B

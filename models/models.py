@@ -244,7 +244,7 @@ class Gamma(nn.Module):
         super(Gamma, self).__init__()
 
         self.linear1 = nn.Linear(num_inputs, 1, bias=False).double()
-        self.linear1.weight.data.fill_(0.) 
+        self.linear1.weight.data.fill_(0.9) 
         
 
     def forward(self, inputs):
@@ -262,6 +262,7 @@ class INTRINSIC_GAMMA:
 
     def get_gamma(self, state):
         gamma = self.model(state)
+        gamma = torch.clip(gamma, 0, 1)
         # TODO: (o___o)
-        gamma = torch.full_like(gamma,.9) # TODO: REMOVE THISSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSs
+        # gamma = torch.full_like(gamma,0.9) # TODO: REMOVE THISSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSs
         return gamma
