@@ -57,6 +57,9 @@ class REINFORCE:
     def update_parameters(self, rewards, log_probs, cumu_gamma):
         # returns = get_returns_t(rewards, gamma, normalize=False)
         returns = Get_Discounted_Returns(rewards, cumu_gamma, normalize=False)
+        # print(rewards)
+        # print(returns)
+        # 1/0
 
         self.optimizer.zero_grad()
 
@@ -206,7 +209,7 @@ class INTRINSIC_REWARD:
             self.prior_reward = prior_reward.view(-1)
 
         self.model = Reward(num_inputs)
-        self.optimizer = optim.SGD(self.model.parameters(), lr=1e-1)
+        self.optimizer = optim.SGD(self.model.parameters(), lr=1e-0)
         self.model.train()
 
     def get_reward(self, state_action):

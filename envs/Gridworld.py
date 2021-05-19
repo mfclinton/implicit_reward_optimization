@@ -63,8 +63,8 @@ class GridWorld(gym.Env):
         }
         self._state = state_obj
 
-        if(self.do_heatmap):
-            self.update_heatmap(state_obj)
+        # if(self.do_heatmap):
+        #     self.update_heatmap(state_obj)
 
         return state_obj
 

@@ -65,7 +65,7 @@ def Get_Prior_Reward(env, prior_id):
     if prior_id == 0:
         reward_1 = torch.full((env.action_space.n * env.state_space.n,), -1.)
         reward_1[env.state_space.n * 3:] = 1.0
-        print(reward_1)
+        # print(reward_1)
     elif prior_id == 1:
         # MANHATTEN
         h, w = env._grid_dims
@@ -94,7 +94,7 @@ def Get_Prior_Reward(env, prior_id):
         # reward_1 = reward_1.view(-1)
         
         reformat_prior = True
-        print(reward_1.view(25,4))
+        # print(reward_1.view(25,4))
     elif prior_id == 2:
         # Avoid bottom left
         reward_1 = torch.zeros((env.action_space.n * env.state_space.n,)).view(25,4)
@@ -102,12 +102,18 @@ def Get_Prior_Reward(env, prior_id):
         reward_1[bottom_left_indexes, :] -= 2
         reward_1 = reward_1.view(-1)
         reformat_prior = True
-        print(reward_1.view(25,4))
-    else:
-        return None
+        # print(reward_1.view(25,4))
+    elif prior_id == 3:
+        # Avoid bottom left
+        reward_1 = torch.zeros((env.action_space.n * env.state_space.n,)).view(25,4)
+        pos_idx = torch.tensor([6,8])
+        reward_1[pos_idx, :] += 10
+        reward_1 = reward_1.view(-1)
+        reformat_prior = True
+        # print(reward_1.view(25,4))
 
     if(reformat_prior):
-        print("Reformated Prior")
+        # print("Reformated Prior")
         reward_1 = reward_1.view(25,4)
         reward_1 = reward_1.T.reshape(-1)
 
@@ -118,9 +124,9 @@ def Get_Prior_Reward(env, prior_id):
 def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
     Use_Chris_World = False
     Save_Data = False
-    prior_id = 1
+    prior_id = 3
     
-    env = GridWorld() # Creates Environment
+    env = GridWorld(obstacle_states = []) # Creates Environment
     # env = SimpleBandit()
     agent = REINFORCE(env.state_space.n, env.action_space) #Create Policy Function, (S) --> (25) --> (A)
 
@@ -139,7 +145,7 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
     for t1 in range(T1):
         # TODO: Can we keep the same agent across iterations?
         # agent = REINFORCE(env.state_space.n, env.action_space)
-        agent.reset() ### Might not be necessary, can slow down learning
+        # agent.reset() ### Might not be necessary, can slow down learning
         for t2 in range(T2):
             # Get Trajectory returns lists of elements with the following dims
             # States, (S,)
@@ -436,4 +442,4 @@ if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
     torch.manual_seed(0)
     np.random.seed(0)
-    Run_Gridworld_Implicit(15, 50, 5, True, True)
+    Run_Gridworld_Implicit(25, 100, 10, True, True)
