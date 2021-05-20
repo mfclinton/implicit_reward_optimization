@@ -77,12 +77,13 @@ class Solver:
             while not done:
                 # get action
                 action, extra_info, dist = agent.get_action(state)
+                
                 # take step
                 new_state, reward, valid_actions, done, info = env.step(action=action)
-                # update agent
-
-                agent.update(state, action, extra_info, reward, new_state, valid_actions, done)
                 
+                # update agent
+                agent.update(state, action, extra_info, reward, new_state, valid_actions, done)
+
                 # TODO
                 # update state
                 state = new_state
@@ -91,7 +92,7 @@ class Solver:
                 # add r
                 total_r += reward
                 step += 1
-            print("End Episode")
+
             steps += step
 
             if episode == self.config.max_episodes - 1:
@@ -101,6 +102,8 @@ class Solver:
 
                 t0 = time()
                 steps = 0
+            
+            print("Avg Reward ", total_r / step)
             
             
         

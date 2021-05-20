@@ -84,6 +84,19 @@ class Gridworld_687(object):
             item.remove()
         self.objects = {}
 
+    def debug_console(self):
+        result = ""
+        cur_x, cur_y  = self.curr_pos
+        for y in range(self.width):
+            for x in range(self.width):
+                if x == cur_x and y == cur_y:
+                    result += "X"
+                    continue
+
+                result += "_"
+            result += "\n"
+        print(result)
+
     # reward values associated with states
     def set_rewards(self):
         # All rewards
@@ -91,6 +104,7 @@ class Gridworld_687(object):
         self.G2_reward = +10 #- 5
 
     def reset(self):
+        print("RESET")
         self.set_rewards()
         self.steps_taken = 0
         self.reward_states = self.get_reward_states()
@@ -122,13 +136,12 @@ class Gridworld_687(object):
 
     def step(self, action):
         assert self.valid_actions[action]
+        self.debug_console() # TODO: REMOVE
 
-        print(self.steps_taken)
         self.steps_taken += 1
         reward = 0
 
         term = self.is_terminal()
-        print(term)
         if term:
             return self.curr_state, 0, self.valid_actions, term, {'No INFO implemented yet'}
 

@@ -32,8 +32,9 @@ class OneHot_Basis(Basis):
         self.width = env.width
 
     def forward(self, state):
-        state = state[0]
-        idx = (state[0] + self.width * state[1]).int() #TODO do better
-        output = torch.zeros(self.feature_dim)
-        output[idx] = 1
+        N, _ = state.size()
+        idx = (state[:,:1] + self.width * state[:,1:]).long() #TODO do better
+
+        output = torch.zeros((N, self.feature_dim))
+        output[torch.arange(N), idx] = 1
         return output

@@ -20,7 +20,7 @@ class Reinforce(Agent):
         self.counter = 0
 
         # TEMP TODO
-        self.optim = torch.optim.Adam(self.policy.parameters(), lr=.001)
+        self.optim = torch.optim.Adam(self.policy.parameters(), lr=.1)
 
         self.initialized = True
         # TODO
@@ -71,7 +71,9 @@ class Reinforce(Agent):
 
         self.optim.zero_grad()  
         loss.backward()
+        # TODO: Insert Lambda ?
         self.optim.step()
 
-        self.optim
-        
+        # TODO: REMOVE THIS
+        self.memory.reset()
+

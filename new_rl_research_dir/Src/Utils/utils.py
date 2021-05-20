@@ -48,7 +48,7 @@ class TrajectoryBuffer:
     def add(self, s1, a1, p1, r1):
         pos = self.buffer_pos
         step = self.timestep_ctr
-        print(f"Step {step} and Pos {pos}")
+        # print(f"Step {step} and Pos {pos}")
 
         self.s[pos][step] = torch.tensor(s1)
         self.a[pos][step][a1] = torch.tensor(1.0) #TODO: TEMP SOLUTION
