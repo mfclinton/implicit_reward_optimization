@@ -9,10 +9,10 @@ from gym.spaces import Discrete, Box
 
 
 class Gridworld_687(object):
-    def __init__(self, max_steps=200, action_prob=1.0, debug=True):
+    def __init__(self, max_steps=200, action_prob=1.0, randomness = 0.2, debug=True):
         self.debug = debug
         self.action_prob = action_prob
-        self.randomness = 1 - action_prob
+        self.randomness = randomness
         self.n_actions = 4
 
         self.n_observations = 25 #TODO CHECK THIS
@@ -24,6 +24,7 @@ class Gridworld_687(object):
 
         self.max_steps = max_steps
         self.step_reward = 0
+        self.timeout_reward = -10000
         self.step_unit = 1
         self.repeat = 1
 
@@ -104,7 +105,7 @@ class Gridworld_687(object):
         self.G2_reward = +10 #- 5
 
     def reset(self):
-        print("RESET")
+        # print("RESET")
         self.set_rewards()
         self.steps_taken = 0
         self.reward_states = self.get_reward_states()
@@ -131,10 +132,12 @@ class Gridworld_687(object):
         # Make sure that there is at least one available action always.
         while not self.valid_actions.any():
             self.valid_actions = np.array((np.random.rand(self.n_actions) <= self.action_prob), dtype=int)
-
         return self.valid_actions
 
     def step(self, action):
+        if action is not int:
+            action = np.nonzero(action)[0,0].item()
+
         assert self.valid_actions[action]
         self.debug_console() # TODO: REMOVE
 
@@ -143,7 +146,7 @@ class Gridworld_687(object):
 
         term = self.is_terminal()
         if term:
-            return self.curr_state, 0, self.valid_actions, term, {'No INFO implemented yet'}
+            return self.curr_state, self.timeout_reward, self.valid_actions, term, {'No INFO implemented yet'}
 
         reward += self.step_reward
 
@@ -169,7 +172,8 @@ class Gridworld_687(object):
             reward += self.collision_reward
             transition = False
 
-        if self.is_terminal():
+        reached_goal = self.is_terminal()
+        if reached_goal:
             transition = False
         
         if transition:
@@ -179,7 +183,7 @@ class Gridworld_687(object):
             # print(self.curr_pos)
             pass
 
-        return self.curr_state.copy(), reward, self.get_valid_actions(), self.is_terminal(), {'No INFO implemented yet'}
+        return self.curr_state.copy(), reward, self.get_valid_actions(), reached_goal, {'No INFO implemented yet'}
 
     def make_state(self):
         x, y = self.curr_pos
@@ -244,9 +248,11 @@ class Gridworld_687(object):
 
     def is_terminal(self):
         if self.in_region(self.curr_pos, self.G2):
-            return True
+            # print(self.curr_pos, "TEEEEEEEEEEEEEEEEEEEEEERMINAL")
+            return 1
         elif self.steps_taken >= self.max_steps:
-            return True
+            # print("EXCEED")
+            return 2
         else:
             return False
 
@@ -265,6 +271,7 @@ if __name__=="__main__":
             available = np.where(valid)[0]
             action = np.random.choice(available)
             next_state, r, valid, done, _ = env.step(action)
+            print(action, next_state)
             rewards += r
 
         # print(env.steps_taken)

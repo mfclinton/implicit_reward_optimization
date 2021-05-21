@@ -14,5 +14,5 @@ config:
   gamma_func:
     _target_: Src.Algorithms.Gamma.GammaFunc.GammaFunc
   offpolicy: True
-  max_episodes: 1000
+  max_episodes: 10000
   

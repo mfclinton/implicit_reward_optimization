@@ -83,6 +83,7 @@ class Solver:
                 
                 # update agent
                 agent.update(state, action, extra_info, reward, new_state, valid_actions, done)
+                
 
                 # TODO
                 # update state

@@ -35,6 +35,8 @@ class OneHot_Basis(Basis):
         N, _ = state.size()
         idx = (state[:,:1] + self.width * state[:,1:]).long() #TODO do better
 
-        output = torch.zeros((N, self.feature_dim))
-        output[torch.arange(N), idx] = 1
+        output = torch.zeros((N, self.feature_dim)) #TODO: PRE ALLOCATE?
+
+        output[torch.arange(N), idx.squeeze()] = 1
+
         return output
