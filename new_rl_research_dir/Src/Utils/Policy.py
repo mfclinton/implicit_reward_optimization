@@ -19,7 +19,7 @@ class Categorical(Policy):
 
         self.fc1 = nn.Linear(self.state_dim, self.action_dim)
 
-    def re_init_optim(self):
+    def re_init_optim(self, optimizer):
         # TODO
         self.optim = self.config.optim(self.parameters(), lr=self.config.actor_lr)
 

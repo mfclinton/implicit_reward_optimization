@@ -1,16 +1,14 @@
 config:
   _target_: Src.run.Config
   env:
-    _target_: Environments.mountain_car.MountainCarEnv
+    _target_: Environments.Gridworld_687.Gridworld_687
+    debug: False
   agent:
     _target_: Src.Algorithms.Agent.Reinforce.Reinforce
     buffer_size: 100
-    batch_size: 10
-    lr: 0.01
+    batch_size: 20
     basis:
-      _target_: Src.Utils.Basis.Fourier_Basis
-      fourier_order: 3
-      fourier_coupled: True
+      _target_: Src.Utils.Basis.OneHot_Basis
   reward_func:
     _target_: Src.Algorithms.Reward.RewardFunc.RewardFunc
   gamma_func:

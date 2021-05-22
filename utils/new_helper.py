@@ -39,7 +39,7 @@ def New_Calculate_C(phi, cumu_gammas, discounted_returns):
     # print(phi, cumu_gammas[0,:])
     # print(phi * cumu_gammas[0,:].view(-1,1))
     ## Double check, should this just direct multiplication. Why [0,:]?
-    return (phi * discounted_returns.view(-1,1)).sum(dim=0)
+    # return (phi * discounted_returns.view(-1,1)).sum(dim=0)
     return (torch.mm(cumu_gammas, phi) * discounted_returns.view(-1,1)).sum(dim=0) 
 
     # return (phi * cumu_gammas[0,:].view(-1,1) * discounted_returns.view(-1,1)).sum(dim=0)

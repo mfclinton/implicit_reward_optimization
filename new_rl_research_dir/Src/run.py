@@ -60,6 +60,8 @@ class Solver:
     def train(self):
         agent = self.config.agent
         env = self.config.env
+        torch.manual_seed(0) # TODO: Fix
+        np.random.seed(0)
 
 
         returns = []
@@ -70,7 +72,11 @@ class Solver:
         steps = 0
         t0 = time()
         for episode in range(start_ep, self.config.max_episodes):
+            if episode % 100 == 0:
+                print("Episode : ", episode)
+
             state, valid_actions = self.reset()
+            # print(state, "sassadsad")
 
             step, total_r = 0, 0
             done = False
@@ -93,6 +99,7 @@ class Solver:
                 # add r
                 total_r += reward
                 step += 1
+                # env.render()
 
             steps += step
 
@@ -104,7 +111,7 @@ class Solver:
                 t0 = time()
                 steps = 0
             
-            print("Avg Reward ", total_r / step)
+            # print("Avg Reward ", total_r / step)
             
             
         

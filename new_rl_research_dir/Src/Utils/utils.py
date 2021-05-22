@@ -51,7 +51,7 @@ class TrajectoryBuffer:
         # print(f"Step {step} and Pos {pos}")
 
         self.s[pos][step] = torch.tensor(s1)
-        self.a[pos][step] = torch.tensor(a1) #TODO: TEMP SOLUTION
+        self.a[pos][step] = torch.tensor(a1) #TODO: TEMP SOLUTION, might want to .copy()
         self.p[pos][step] = torch.tensor(p1)
         self.r[pos][step] = torch.tensor(r1)
         self.mask[pos][step] = torch.tensor(1.0)
@@ -73,8 +73,8 @@ class TrajectoryBuffer:
             else:
                 ids -= self.ids[self.buffer_pos + 1]
 
-        return self.s[idx], self.a[idx], self.p[idx], self.r[idx] #TODO
-        # return ids, self.s[idx], self.a[idx], self.beta[idx], self.r[idx], self.mask[idx]
+        # return self.s[idx], self.a[idx], self.p[idx], self.r[idx] #TODO
+        return ids, self.s[idx], self.a[idx], self.p[idx], self.r[idx], self.mask[idx]
 
     def sample(self, batch_size):
         count = min(batch_size, self.valid_len)
