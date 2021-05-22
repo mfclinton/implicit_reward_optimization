@@ -24,12 +24,6 @@ class Reinforce(Agent):
         self.memory = TrajectoryBuffer(self.buffer_size, self.state_dim, self.action_dim, config)
         self.counter = 0
 
-        # TEMP TODO DELETE LATER
-        # self.optim = torch.optim.Adam(self.policy.parameters(), lr=.1)
-        self.optim = torch.optim.Adam(self.policy.parameters(), lr=self.lr) # TODO: REMOVE
-        self.baseline_optim = torch.optim.Adam(self.baseline.parameters(), lr=.01) #TODO: REMOVE
-
-
         self.initialized = True
         # TODO
         # TODOOOO
@@ -86,29 +80,20 @@ class Reinforce(Agent):
 
         # gamma = 0.9 # TODO: TEMP gamma
         gamma = 1.0
-        state_values_loss = 0
         for i in range(H-2, -1, -1):
-            delta = (r[:, i] + gamma * state_values[:, i+1] - state_values[:, i]).detach()
-            state_values_loss += delta * state_values[:, i]
-
             returns[:, i] += returns[:, i+1] * gamma
+
 
         loss = 0
         log_pi_return = torch.sum(log_pi * (returns - state_values.detach()), dim=-1, keepdim=True)
         loss += - 1.0 * torch.sum(log_pi_return)
-        sv_loss = - 1.0 * torch.sum(state_values_loss)
-        # print(loss)
+        
+        sv_loss = torch.nn.functional.mse_loss(state_values, returns, reduction="mean")
 
-        self.optim.zero_grad()  
-        loss.backward()
+        
         # TODO: Insert Lambda ?
-        torch.nn.utils.clip_grad_norm_(self.policy.parameters(), 1)
-        self.optim.step()
-
-        self.baseline_optim.zero_grad()
-
-        sv_loss.backward()
-        self.baseline_optim.step()
+        self.policy.step(loss)
+        self.baseline.step(sv_loss)
 
         # TODO: REMOVE THIS
         self.memory.reset()

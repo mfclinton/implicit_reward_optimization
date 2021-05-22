@@ -117,6 +117,7 @@ class Solver:
         
 
 @hydra.main(config_path=".", config_name="config")
+# @hydra.main(config_path=".", config_name="config_GW")
 def main(nonloaded_config : DictConfig) -> None:
     t = time()
     solver = Solver(nonloaded_config)

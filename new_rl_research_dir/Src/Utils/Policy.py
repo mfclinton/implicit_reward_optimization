@@ -2,8 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+from Src.Algorithms.Algorithm import Algorithm
 
-class Policy(nn.Module):
+class Policy(Algorithm):
     def __init__(self, state_dim, config, action_dim=None):
         super(Policy, self).__init__()
         self.config = config
@@ -11,17 +12,14 @@ class Policy(nn.Module):
         self.action_dim = config.env.action_space.n
 
 class Categorical(Policy):
-    def __init__(self, state_dim, config, action_dim=None):
+    def __init__(self, state_dim, config, action_dim=None, optim=torch.optim.Adam, lr=.01):
         super(Categorical, self).__init__(state_dim, config)
         # overrides the action dim variable defined by super-class
         if action_dim is not None:
             self.action_dim = action_dim
 
         self.fc1 = nn.Linear(self.state_dim, self.action_dim)
-
-    def re_init_optim(self, optimizer):
-        # TODO
-        self.optim = self.config.optim(self.parameters(), lr=self.config.actor_lr)
+        self.init_optimizer(optim, lr)
 
     def forward(self, state):
         x = self.fc1(state)

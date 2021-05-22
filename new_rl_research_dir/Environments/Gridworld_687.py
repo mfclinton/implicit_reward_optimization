@@ -139,7 +139,7 @@ class Gridworld_687(object):
             action = np.nonzero(action)[0,0].item()
 
         assert self.valid_actions[action]
-        # self.debug_console() # TODO: REMOVE
+        self.debug_console() # TODO: REMOVE
 
         self.steps_taken += 1
         reward = 0
