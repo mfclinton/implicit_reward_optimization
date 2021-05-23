@@ -5,11 +5,12 @@ class Algorithm(nn.Module):
     def __init__(self):
         super(Algorithm, self).__init__()
 
-    def init_optimizer(self, optim, lr):
+    def init_optimizer(self):
         # print("LOL HAHAHAHA")
-        self.optim = optim(self.parameters(), lr=lr)
+        self.optim = self.optim(self.parameters(), lr=self.lr)
 
     def step(self, loss, normalize_grad = True):
+        # print(self.optim)
         self.optim.zero_grad()
         loss.backward()
         if normalize_grad:

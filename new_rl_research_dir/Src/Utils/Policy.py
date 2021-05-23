@@ -5,21 +5,30 @@ import numpy as np
 from Src.Algorithms.Algorithm import Algorithm
 
 class Policy(Algorithm):
-    def __init__(self, state_dim, config, action_dim=None):
+    def __init__(self):
         super(Policy, self).__init__()
+
+    def init(self, config, action_dim=None):
         self.config = config
-        self.state_dim = state_dim
+        self.state_dim = config.basis.feature_dim
         self.action_dim = config.env.action_space.n
 
 class Categorical(Policy):
-    def __init__(self, state_dim, config, action_dim=None, optim=torch.optim.Adam, lr=.01):
-        super(Categorical, self).__init__(state_dim, config)
+    def __init__(self, optim=torch.optim.Adam, lr=.01):
+        super(Categorical, self).__init__()
+        self.optim = optim
+        self.lr = lr
+        print("SSSSSSSSSSSSSSSSSSSSSSSSSSs")
+
+    def init(self, config, action_dim=None):
+        super(Categorical, self).init(config)
         # overrides the action dim variable defined by super-class
+
         if action_dim is not None:
             self.action_dim = action_dim
-
+            
         self.fc1 = nn.Linear(self.state_dim, self.action_dim)
-        self.init_optimizer(optim, lr)
+        self.init_optimizer()
 
     def forward(self, state):
         x = self.fc1(state)
