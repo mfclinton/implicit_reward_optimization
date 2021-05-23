@@ -18,6 +18,7 @@ class Reinforce(Agent):
         super(Reinforce, self).init(config)
         self.state_features.init(config)
 
+        # TODO: These are hardcodes - also not sure if I need the Baseline anymore
         self.policy = Categorical(self.state_features.feature_dim, config, action_dim=None) #TODO, Dynamic
         self.baseline = Baseline(self.state_features.feature_dim)
 
@@ -57,8 +58,8 @@ class Reinforce(Agent):
 
         B, H, D = s.shape
         _, _, A = a.shape
-        print("MAX : ", s[0].max(dim=0))
-        print("MIN : ", s[0].min(dim=0))
+        # print("MAX : ", s[0].max(dim=0))
+        # print("MIN : ", s[0].min(dim=0))
 
         # print(a)
 
@@ -95,6 +96,7 @@ class Reinforce(Agent):
         self.policy.step(loss)
         self.baseline.step(sv_loss)
 
-        # TODO: REMOVE THIS
-        self.memory.reset()
+        # TODO: CHECK THIS
+        if not self.config.offpolicy:
+            self.memory.reset()
 

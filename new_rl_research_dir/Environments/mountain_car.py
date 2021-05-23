@@ -8,7 +8,7 @@ import numpy as np
 
 import gym
 from gym import spaces
-from gym.utils import seeding
+# from gym.utils import seeding
 
 
 class MountainCarEnv(gym.Env):
@@ -68,7 +68,7 @@ class MountainCarEnv(gym.Env):
         self.n_actions = 3
 
         # self.force = 0.001
-        self.force = 0.003
+        self.force = 0.002
         self.gravity = 0.0025
 
         self.low = np.array(
@@ -85,7 +85,7 @@ class MountainCarEnv(gym.Env):
             self.low, self.high, dtype=np.float32
         )
 
-        self.seed(0) #TODO: fix
+        # self.seed(0) #TODO: fix
 
     def get_valid_actions(self):
         self.valid_actions = np.array((np.random.rand(self.n_actions) <= self.action_prob), dtype=int)
@@ -94,9 +94,9 @@ class MountainCarEnv(gym.Env):
             self.valid_actions = np.array((np.random.rand(self.n_actions) <= self.action_prob), dtype=int)
         return self.valid_actions
 
-    def seed(self, seed=None):
-        self.np_random, seed = seeding.np_random(seed)
-        return [seed]
+    # def seed(self, seed=None):
+    #     self.np_random, seed = seeding.np_random(seed)
+    #     return [seed]
 
     def step(self, action):
         if action is not int:
@@ -113,8 +113,8 @@ class MountainCarEnv(gym.Env):
         if (position == self.min_position and velocity < 0):
             velocity = 0
 
-        if position == self.min_position:
-            print("FINISHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHED")
+        # if position == self.min_position:
+        #     print("FINISHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHED")
 
         done = bool(
             (position >= self.goal_position and velocity >= self.goal_velocity) or (self.steps_taken >= self.max_steps)
@@ -125,7 +125,7 @@ class MountainCarEnv(gym.Env):
         return np.array(self.state), reward, self.get_valid_actions(), done, {}
 
     def reset(self):
-        self.state = np.array([self.np_random.uniform(low=-0.6, high=-0.4), 0])
+        self.state = np.array([np.random.uniform(low=-0.6, high=-0.4), 0])
         self.steps_taken = 0
         return np.array(self.state), self.get_valid_actions()
 

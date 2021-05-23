@@ -353,8 +353,9 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         else:
             # print(c.size(), A.size(), H.size())
             # print(c, A, H)
-            d_in_reward_params = - c * (A.squeeze() / H.squeeze()) #TODO make negative
-            d_in_gamma_params = - c * (B.squeeze() / H.squeeze())
+            d_in_reward_params = - c * (A.squeeze() / H.squeeze()) #+ .5 * (in_reward.model.linear1.weight**2).sum() #TODO make negative
+            print(.5 * (in_reward.model.linear1.weight**2).sum())
+            d_in_gamma_params = - c * (B.squeeze() / H.squeeze()) #+ .5 * (in_gamma.model.linear1.weight**2).sum()
         # print(c.shape, H.shape, A.shape, d_in_reward_params.shape, in_reward.model.linear1.weight.size())
 
         # Hack to maintain memory, check later
@@ -368,7 +369,10 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         in_reward.model.linear1.weight.grad = d_in_reward_params.unsqueeze(-1).T.detach()
         in_gamma.model.linear1.weight.grad = d_in_gamma_params.unsqueeze(-1).T.detach()
         utils.clip_grad_norm_(in_reward.model.parameters(), 40)
+        utils.clip_grad_norm_(in_gamma.model.parameters(), 40)
+
         in_reward.optimizer.step()
+        in_gamma.optimizer.step()
 
         # DEBUGGING
         print("--- Reward Map---")
@@ -390,6 +394,8 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         print("Average Intrinsic Reward: ", total_average_intrinsic_reward / T3)
         # print(in_rewards)
         print("Iteration ", t1)
+        print(in_gammas)
+
     
     if not Use_Chris_World:
         print("FINAL REWARD MAP")

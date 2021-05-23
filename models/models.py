@@ -209,7 +209,7 @@ class INTRINSIC_REWARD:
             self.prior_reward = prior_reward.view(-1)
 
         self.model = Reward(num_inputs)
-        self.optimizer = optim.SGD(self.model.parameters(), lr=1e-0)
+        self.optimizer = optim.SGD(self.model.parameters(), lr=1e-0, weight_decay=1e-5)
         self.model.train()
 
     def get_reward(self, state_action):
@@ -253,14 +253,14 @@ class Gamma(nn.Module):
     def forward(self, inputs):
         x = inputs
         x = self.linear1(x)
-        gamma = torch.sigmoid(x)
-        return gamma
+        # gamma = torch.sigmoid(x)
+        return x
 
 class INTRINSIC_GAMMA:
     def __init__(self, num_inputs):
         self.model = Gamma(num_inputs)
         self.model = self.model
-        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-1, amsgrad=True)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-1, amsgrad=True, weight_decay=1e-5)
         self.model.train()
 
     def get_gamma(self, state):

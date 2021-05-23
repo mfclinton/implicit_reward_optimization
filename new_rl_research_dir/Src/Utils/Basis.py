@@ -71,7 +71,7 @@ class Fourier_Basis(Basis):
         self.basis_weights = weights.type(torch.FloatTensor).requires_grad_(False)
         self.dummy_param = torch.nn.Parameter(torch.rand(1).type(torch.FloatTensor))
         # self.init()
-        print("CREATED FOURIER")
+        # print("CREATED FOURIER")
 
     def coupled(self, x):
         # Creates a cosine only basis having order^(dim) terms

@@ -6,6 +6,8 @@ from omegaconf import DictConfig, OmegaConf
 from time import time
 import torch
 import numpy as np
+from Src.Utils.utils import Logger
+import sys
 
 class Config:
     def __init__(self, 
@@ -14,13 +16,19 @@ class Config:
     reward_func, 
     gamma_func, 
     offpolicy=False, 
-    max_episodes=100):
+    max_episodes=100,
+    log_path=r"/media/mfclinton/647875097874DAEE/Users/mfcli/Documents/School/S21/Research/rl_research/new_rl_research_dir/logs",
+    restore=False,
+    method="file",
+    seed=0):
         self.env = env
         self.agent = agent
         self.reward_func = reward_func
         self.gamma_func = gamma_func
         self.offpolicy = offpolicy
         self.max_episodes = max_episodes
+        sys.stdout = Logger(log_path, restore, method)
+        self.seed = seed
 
 
 class Solver:
@@ -42,10 +50,11 @@ class Solver:
     def init(self):
         for attr, obj in vars(self.config).items():
             try:
-                print(f"Initializing {attr}")
+                # print(f"Initializing {attr}")
                 obj.init(self.config)
             except Exception as err:
-                print(err)
+                # print(err)
+                pass
 
     # Resets everything and return state and valid actions
     def reset(self):
@@ -60,8 +69,8 @@ class Solver:
     def train(self):
         agent = self.config.agent
         env = self.config.env
-        torch.manual_seed(0) # TODO: Fix
-        np.random.seed(0)
+        torch.manual_seed(self.config.seed) # TODO: Fix
+        np.random.seed(self.config.seed)
 
 
         returns = []
@@ -72,8 +81,8 @@ class Solver:
         steps = 0
         t0 = time()
         for episode in range(start_ep, self.config.max_episodes):
-            if episode % 100 == 0:
-                print("Episode : ", episode)
+            # if episode % 100 == 0:
+            #     print("Episode : ", episode)
 
             state, valid_actions = self.reset()
             # print(state, "sassadsad")
@@ -112,6 +121,7 @@ class Solver:
                 steps = 0
             
             # print("Avg Reward ", total_r / step)
+            print(f"Episode: {episode} | Total Reward: {total_r} | Length: {step} | Avg Reward: {total_r / step}")
             
             
         

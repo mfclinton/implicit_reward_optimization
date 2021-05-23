@@ -6,7 +6,7 @@ class Algorithm(nn.Module):
         super(Algorithm, self).__init__()
 
     def init_optimizer(self, optim, lr):
-        print("LOL HAHAHAHA")
+        # print("LOL HAHAHAHA")
         self.optim = optim(self.parameters(), lr=lr)
 
     def step(self, loss, normalize_grad = True):

@@ -9,7 +9,7 @@ config:
     lr: 0.01
     basis:
       _target_: Src.Utils.Basis.Fourier_Basis
-      fourier_order: 4
+      fourier_order: 3
       fourier_coupled: True
   reward_func:
     _target_: Src.Algorithms.Reward.RewardFunc.RewardFunc
@@ -17,4 +17,5 @@ config:
     _target_: Src.Algorithms.Gamma.GammaFunc.GammaFunc
   offpolicy: True
   max_episodes: 10000
+  seed: 0
   

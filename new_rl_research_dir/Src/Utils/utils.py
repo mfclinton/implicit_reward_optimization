@@ -1,5 +1,10 @@
 import torch
 import numpy as np
+import sys
+from os import path, mkdir, listdir, fsync
+from time import time
+
+
 # TODO
 class TrajectoryBuffer:
     def __init__(self, buffer_size, state_dim, action_dim, config):
@@ -79,3 +84,50 @@ class TrajectoryBuffer:
     def sample(self, batch_size):
         count = min(batch_size, self.valid_len)
         return self._get(np.random.choice(self.valid_len, count))
+
+
+# From https://github.com/yashchandak/OptFuture_NSMDP/blob/master/Src/Utils/utils.py
+class Logger(object):
+    fwrite_frequency = 1800  # 30 min * 60 sec
+    temp = 0
+
+    def __init__(self, log_path, restore, method):
+        self.terminal = sys.stdout
+        self.file = 'file' in method
+        self.term = 'term' in method
+
+        if self.file:
+            if restore:
+                self.log = open(path.join(log_path, "logfile.log"), "a")
+            else:
+                self.log = open(path.join(log_path, "logfile.log"), "w")
+
+
+    def write(self, message):
+        if self.term:
+            self.terminal.write(message)
+
+        if self.file:
+            self.log.write(message)
+
+            # Save the file frequently
+            if (time() - self.temp) > self.fwrite_frequency:
+                self.flush()
+                self.temp = time()
+
+    def flush(self):
+        #this flush method is needed for python 3 compatibility.
+        #this handles the flush command by doing nothing.
+        #you might want to specify some extra behavior here.
+
+        # Save the contents of the file without closing
+        # https://stackoverflow.com/questions/19756329/can-i-save-a-text-file-in-python-without-closing-it
+        # WARNING: Time consuming process, Makes the code slow if too many writes
+        if self.file:
+            self.log.flush()
+            fsync(self.log.fileno())
+
+class DataManager:
+    def __init__(self):
+        pass    
+
