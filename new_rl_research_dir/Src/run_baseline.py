@@ -19,10 +19,8 @@ class Config:
     reward_func, 
     gamma_func,
     name="default",
-    offpolicy=False,
-    T1=10,
+    offpolicy=False, 
     max_episodes=100,
-    T3=20,
     log_path=r"/media/mfclinton/647875097874DAEE/Users/mfcli/Documents/School/S21/Research/rl_research/new_rl_research_dir/logs",
     restore=False,
     method="file",
@@ -36,9 +34,7 @@ class Config:
         self.gamma_func = gamma_func
         self.name = name
         self.offpolicy = offpolicy
-        self.T1 = T1
         self.max_episodes = max_episodes
-        self.T3 = T3
         self.buffer_size = buffer_size
         self.batch_size = batch_size
 
@@ -83,31 +79,6 @@ class Solver:
         self.memory.next() #TODO: check if this is resetting correctly
 
         return state, valid_actions
-
-    def generate_episode(self):
-        env = self.config.env
-        basis = self.config.basis
-        agent = self.config.agent
-
-        # state, valid_actions = self.reset() #TODO: FIX RESETTING
-        state, valid_actions = env.reset() #TODO: FIX RESETTING
-
-        step, total_r = 0, 0
-        done = False
-        while not done:
-            state_feature = torch.tensor(state, requires_grad=False)
-            action, prob, dist = agent.policy.get_action_w_prob_dist(basis.forward(state_feature.view(1, -1)))
-            
-            # TODO: Fix valid actions
-            new_state, reward, valid_actions, done, info = env.step(action=action)
-            
-            self.memory.add(state, action, prob, reward)      
-            state = new_state
-            total_r += reward
-
-            step += 1
-        
-        return total_r, step
     
     def train(self, data_mngr):
         env = self.config.env
@@ -117,46 +88,65 @@ class Solver:
         reward_func = self.config.reward_func
         gamma_func = self.config.gamma_func
 
-        for t1 in range(self.config.T1):
-            for episode in range(self.config.max_episodes):
+        start_ep = 0
+
+        steps = 0
+        t0 = time()
+        for episode in range(start_ep, self.config.max_episodes):
+
+            state, valid_actions = self.reset() #TODO: FIX RESETTING
+
+            step, total_r = 0, 0
+            done = False
+            while not done:
+                state_feature = torch.tensor(state, requires_grad=False)
+                action, prob, dist = agent.policy.get_action_w_prob_dist(basis.forward(state_feature.view(1, -1)))
                 
-                # Get Trajectory
+                new_state, reward, valid_actions, done, info = env.step(action=action)
+                
+                self.memory.add(state, action, prob, reward)      
+                state = new_state
+                total_r += reward
+
+                step += 1
+
+                # env.render()
+
+            # Optimize Agent
+            # batch_size = self.memory.size if self.memory.size < self.config.batch_size else self.config.batch_size
+
+            if self.config.batch_size <= self.memory.episode_ctr:
+                ids, s, a, prob, r, mask = self.memory.sample(self.config.batch_size)
+                # print(s.size())
+                B, H, D = s.shape
+                _, _, A = a.shape
+
+                s_features = basis.forward(s.view(B * H, D))
+                # print(s_features.size(), mask.size())
+                s_features *= mask.view(B*H, 1) #TODO: Check this
+
+                agent.optimize(s_features, a, r)
+
+
                 if not self.config.offpolicy:
-                    total_r, step = self.generate_episode()
+                    self.memory.reset()
 
-                    data_mngr.update_rewards(total_r)
+            data_mngr.update_rewards(total_r)
+            steps += step
 
-                    if episode == self.config.max_episodes - 1:
-                        data_mngr.update_returns()
 
-                # Optimize Agent
-                # batch_size = self.memory.size if self.memory.size < self.config.batch_size else self.config.batch_size
-                if self.config.batch_size <= self.memory.episode_ctr:
-                    ids, s, a, prob, r, mask = self.memory.sample(self.config.batch_size)
-                    B, H, D = s.shape
-                    _, _, A = a.shape
+            if episode == self.config.max_episodes - 1:
+                # TODO
+                # append returns
+                data_mngr.update_returns() #TODO: check if this is what I want
+                # save model and plots
 
-                    s_features = basis.forward(s.view(B * H, D))
-                    s_features *= mask.view(B*H, 1) #TODO: Check this
-
-                    # MATT TODO: LEFT HERE, RUN THROUGH REWARD
-
-                    agent.optimize(s_features, a, r)
-
-                    if not self.config.offpolicy:
-                        self.memory.reset()
-
-                
-                # log.info(f"Episode: {episode} | Total Reward: {total_r} | Length: {step} | Avg Reward: {total_r / step}")
+                t0 = time()
+                # steps = 0
             
-            # Update H, b, and A
-
-            for t3 in range(self.config.T3):
-                total_r, step = self.generate_episode()
-
-                if (t3 == self.config.T3 - 1):
-                    data_mngr.update_returns()
-
+            # print("Avg Reward ", total_r / step)
+            log.info(f"Episode: {episode} | Total Reward: {total_r} | Length: {step} | Avg Reward: {total_r / step}")
+        # self.data_mngr.save()
             
 log = logging.getLogger(__name__)
     

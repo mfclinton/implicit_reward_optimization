@@ -36,6 +36,7 @@ class TrajectoryBuffer:
         self.timestep_ctr = 0
         self.buffer_pos = -1
         self.valid_len = 0
+        print("MEMORY RESET")
 
     def next(self):
         self.episode_ctr += 1
@@ -124,7 +125,6 @@ class DataManager:
         self.save_plot(m, se)
 
     def save_csv(self, m, se):
-        print(se)
         df = pd.DataFrame(np.stack((m, se), axis=1), columns=["Mean", "Standard Error"])
         df.to_csv(f"{self.result_path}/data.csv", index=False)
 

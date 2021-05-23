@@ -1,11 +1,9 @@
 config:
   _target_: Src.run.Config
   env:
-    _target_: Environments.mountain_car.MountainCarEnv
+    _target_: Environments.Gridworld_687.Gridworld_687
   basis:
-      _target_: Src.Utils.Basis.Fourier_Basis
-      fourier_order: 3
-      fourier_coupled: True
+      _target_: Src.Utils.Basis.OneHot_Basis
   agent:
     _target_: Src.Algorithms.Agent.Reinforce.Reinforce
     policy:
@@ -17,10 +15,11 @@ config:
   gamma_func:
     _target_: Src.Algorithms.Gamma.GammaFunc.GammaFunc
   name: "my_experiment"
-  offpolicy: True
-  max_episodes: 500
+  offpolicy: False
+  max_episodes: 100
   buffer_size: 10000
   batch_size: 10
 seed: 0
-num_runs: 5
+num_runs: 1
+  
   
