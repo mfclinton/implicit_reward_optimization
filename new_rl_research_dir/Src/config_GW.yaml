@@ -2,17 +2,24 @@ config:
   _target_: Src.run.Config
   env:
     _target_: Environments.Gridworld_687.Gridworld_687
-    debug: False
+  basis:
+      _target_: Src.Utils.Basis.OneHot_Basis
   agent:
     _target_: Src.Algorithms.Agent.Reinforce.Reinforce
-    buffer_size: 100
-    batch_size: 20
-    basis:
-      _target_: Src.Utils.Basis.OneHot_Basis
+    policy:
+      _target_: Src.Utils.Policy.Categorical
+      lr: .01
   reward_func:
     _target_: Src.Algorithms.Reward.RewardFunc.RewardFunc
+    lr: .01
   gamma_func:
     _target_: Src.Algorithms.Gamma.GammaFunc.GammaFunc
-  offpolicy: True
-  max_episodes: 10000
+  seed: 0
+  num_runs: 1
+  name: "my_experiment"
+  offpolicy: False
+  max_episodes: 100
+  buffer_size: 10000
+  batch_size: 10
+  
   

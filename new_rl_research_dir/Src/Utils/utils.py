@@ -1,8 +1,12 @@
 import torch
 import numpy as np
+from scipy import stats
 import sys
+import os
 from os import path, mkdir, listdir, fsync
 from time import time
+import matplotlib.pyplot as plt
+import pandas as pd
 
 
 # TODO
@@ -85,49 +89,49 @@ class TrajectoryBuffer:
         count = min(batch_size, self.valid_len)
         return self._get(np.random.choice(self.valid_len, count))
 
-
-# From https://github.com/yashchandak/OptFuture_NSMDP/blob/master/Src/Utils/utils.py
-class Logger(object):
-    fwrite_frequency = 1800  # 30 min * 60 sec
-    temp = 0
-
-    def __init__(self, log_path, restore, method):
-        self.terminal = sys.stdout
-        self.file = 'file' in method
-        self.term = 'term' in method
-
-        if self.file:
-            if restore:
-                self.log = open(path.join(log_path, "logfile.log"), "a")
-            else:
-                self.log = open(path.join(log_path, "logfile.log"), "w")
-
-
-    def write(self, message):
-        if self.term:
-            self.terminal.write(message)
-
-        if self.file:
-            self.log.write(message)
-
-            # Save the file frequently
-            if (time() - self.temp) > self.fwrite_frequency:
-                self.flush()
-                self.temp = time()
-
-    def flush(self):
-        #this flush method is needed for python 3 compatibility.
-        #this handles the flush command by doing nothing.
-        #you might want to specify some extra behavior here.
-
-        # Save the contents of the file without closing
-        # https://stackoverflow.com/questions/19756329/can-i-save-a-text-file-in-python-without-closing-it
-        # WARNING: Time consuming process, Makes the code slow if too many writes
-        if self.file:
-            self.log.flush()
-            fsync(self.log.fileno())
-
 class DataManager:
     def __init__(self):
-        pass    
+        self.result_path = os.getcwd()
+        # print(self.result_path)
+        # if not os.path.exists(self.result_path):
+        #     print(f"Creating Results Path at {self.result_path}")
+        #     os.makedirs(self.result_path)
+
+        self.reset()
+
+    def reset(self):
+        self.rewards = []
+        self.returns = []
+
+    def update_rewards(self, reward):
+        self.rewards.append(reward)
+
+    def update_returns(self):
+        self.returns.append(self.rewards)
+        self.rewards = []
+
+    def process_returns(self):
+        np_returns = np.array(self.returns)
+
+        m = np.mean(np_returns, axis=0)
+        se = stats.sem(np_returns, axis=0)
+
+        return m, se
+
+    def save(self):
+        m, se = self.process_returns()
+        self.save_csv(m, se)
+        self.save_plot(m, se)
+
+    def save_csv(self, m, se):
+        print(se)
+        df = pd.DataFrame(np.stack((m, se), axis=1), columns=["Mean", "Standard Error"])
+        df.to_csv(f"{self.result_path}/data.csv", index=False)
+
+    def save_plot(self, m, se):
+        x = np.arange(m.shape[0])
+        plt.errorbar(x, m, se, linestyle='None', marker='^')
+        plt.ylabel("Total Reward")
+        plt.savefig(f"{self.result_path}/graph.png")
+
 

@@ -9,7 +9,7 @@ from gym.spaces import Discrete, Box
 
 
 class Gridworld_687(object):
-    def __init__(self, max_steps=200, action_prob=1.0, randomness = 0.2, debug=True):
+    def __init__(self, max_steps=200, action_prob=1.0, randomness = 0.2, debug=False):
         self.debug = debug
         self.action_prob = action_prob
         self.randomness = randomness
@@ -139,7 +139,7 @@ class Gridworld_687(object):
             action = np.nonzero(action)[0,0].item()
 
         assert self.valid_actions[action]
-        self.debug_console() # TODO: REMOVE
+        # self.debug_console() # TODO: REMOVE
 
         self.steps_taken += 1
         reward = 0

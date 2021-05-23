@@ -6,10 +6,10 @@ from omegaconf import DictConfig, OmegaConf
 from time import time
 import torch
 import numpy as np
-from Src.Utils.utils import Logger
+from Src.Utils.utils import TrajectoryBuffer, DataManager
 import sys
-from Src.Utils.utils import TrajectoryBuffer
 import random
+import logging
 
 class Config:
     def __init__(self,
@@ -17,27 +17,29 @@ class Config:
     basis,
     agent, 
     reward_func, 
-    gamma_func, 
+    gamma_func,
+    seed,
+    num_runs,
+    name="default",
     offpolicy=False, 
     max_episodes=100,
     log_path=r"/media/mfclinton/647875097874DAEE/Users/mfcli/Documents/School/S21/Research/rl_research/new_rl_research_dir/logs",
     restore=False,
     method="file",
     buffer_size=10000,
-    batch_size=10,
-    seed=0):
+    batch_size=10):
         self.env = env
         # print(env)
         self.basis = basis
         self.agent = agent
         self.reward_func = reward_func
         self.gamma_func = gamma_func
+        self.seed = seed
+        self.name = name
         self.offpolicy = offpolicy
         self.max_episodes = max_episodes
-        sys.stdout = Logger(log_path, restore, method)
         self.buffer_size = buffer_size
         self.batch_size = batch_size
-        self.seed = seed
 
 
 class Solver:
@@ -46,14 +48,6 @@ class Solver:
         # Initializes Everything By Passing Config If Possible
         self.config = instantiate(nonloaded_config.config)
         self.init()
-
-        # self.state_dim = np.shape(self.config.env.reset()[0])[0]
-        # if len(self.config.env.action_space.shape) > 0:
-        #     self.action_dim = self.config.env.action_space.shape[0]
-        # else:
-        #     self.action_dim = self.config.env.action_space.n
-        
-        # print("Actions space: {} :: State space: {}".format(self.action_dim, self.state_dim))
     
     # Initializes all classes in config
     def init(self):
@@ -74,7 +68,6 @@ class Solver:
         self.memory = TrajectoryBuffer(self.config.buffer_size, state_dim, action_dim, self.config)
 
 
-
     # Resets everything and return state and valid actions
     def reset(self):
         # Dynamic Resetting
@@ -90,13 +83,10 @@ class Solver:
 
         return state, valid_actions
     
-    def train(self):
+    def train(self, data_mngr):
         agent = self.config.agent
         env = self.config.env
         basis = self.config.basis
-
-        returns = []
-        rewards = []
 
         start_ep = 0
 
@@ -104,7 +94,7 @@ class Solver:
         t0 = time()
         for episode in range(start_ep, self.config.max_episodes):
 
-            state, valid_actions = self.reset()
+            state, valid_actions = self.reset() #TODO: FIX RESETTING
 
             step, total_r = 0, 0
             done = False
@@ -141,24 +131,27 @@ class Solver:
                 if not self.config.offpolicy:
                     self.memory.reset()
 
+            data_mngr.update_rewards(total_r)
             steps += step
+
 
             if episode == self.config.max_episodes - 1:
                 # TODO
                 # append returns
+                data_mngr.update_returns() #TODO: check if this is what I want
                 # save model and plots
 
                 t0 = time()
-                steps = 0
+                # steps = 0
             
             # print("Avg Reward ", total_r / step)
-            print(f"Episode: {episode} | Total Reward: {total_r} | Length: {step} | Avg Reward: {total_r / step}")
+            log.info(f"Episode: {episode} | Total Reward: {total_r} | Length: {step} | Avg Reward: {total_r / step}")
+        # self.data_mngr.save()
             
-            
-        
-
-@hydra.main(config_path=".", config_name="config")
-# @hydra.main(config_path=".", config_name="config_GW")
+log = logging.getLogger(__name__)
+    
+# @hydra.main(config_path=".", config_name="config")
+@hydra.main(config_path=".", config_name="config_GW")
 def main(nonloaded_config : DictConfig) -> None:
 
     # Set Seed
@@ -167,10 +160,18 @@ def main(nonloaded_config : DictConfig) -> None:
     np.random.seed(nonloaded_config.config.seed)
     random.seed(nonloaded_config.config.seed)
 
+
     t = time()
-    solver = Solver(nonloaded_config)
-    solver.train()
-    print("Total time taken: {}".format(time()-t))
+    data_mngr = DataManager()
+
+    for i in range(nonloaded_config.config.num_runs):
+        solver = Solver(nonloaded_config)
+        solver.train(data_mngr)
+
+    data_mngr.save()
+    with open("config_params", "w") as f:
+        f.write(str(nonloaded_config))
+    log.info("Total time taken: {}".format(time()-t))
 
 
 if __name__ == "__main__":
