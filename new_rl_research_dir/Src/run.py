@@ -165,9 +165,8 @@ class Solver:
             B_value = 0
             A_value = 0
             for b in range(B):
-                cumu_in_g = Get_Cumulative_Gamma(in_g[b]).detach()
+                cumu_in_g = Get_Cumulative_Gamma(in_g[b]).detach() * mask[b]
                 disc_in_r = Get_Discounted_Returns(in_r[b], cumu_in_g, normalize=False).detach()
-
 
                 # TODO: CHECK GRADIENTS
                 phi = calc_grads(agent.policy, log_pi[b], True).detach()
@@ -195,7 +194,7 @@ class Solver:
                 # TODO: Check that gamma is right w/ equation? Parameterized for C?
                 gamma = torch.full((H,), self.config.gamma)
                 gamma *= mask
-                cumu_gamma = Get_Cumulative_Gamma(gamma).detach()
+                cumu_gamma = Get_Cumulative_Gamma(gamma).detach() * mask
 
                 phi = calc_grads(agent.policy, log_pi, True).detach()
 

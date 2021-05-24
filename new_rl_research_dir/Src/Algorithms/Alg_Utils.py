@@ -51,6 +51,7 @@ def Process_Sample(sample, basis, agent, reward_func, gamma_func):
 
     in_r = reward_func(s_features, a.view(B*H, A)).view(B,H)
     in_r *= mask
+    # print(in_r, r)
 
     in_g = gamma_func(s_features, a.view(B*H, A)).view(B,H)
     in_g *= mask
