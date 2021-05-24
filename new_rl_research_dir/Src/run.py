@@ -143,7 +143,7 @@ class Solver:
                 # Optimize Agent
                 # batch_size = self.memory.size if self.memory.size < self.config.batch_size else self.config.batch_size
                 sample = self.memory.sample(1)
-                ids, s, g, prob, r, mask = sample
+                ids, s, a, prob, r, mask = sample
                 B, H, D = s.shape
                 _, _, A = a.shape
 
