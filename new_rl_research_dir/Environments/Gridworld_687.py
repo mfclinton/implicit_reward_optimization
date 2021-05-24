@@ -24,7 +24,7 @@ class Gridworld_687(object):
 
         self.max_steps = max_steps
         self.step_reward = 0
-        self.timeout_reward = -10000
+        self.timeout_reward = -10
         self.step_unit = 1
         self.repeat = 1
 
@@ -35,9 +35,7 @@ class Gridworld_687(object):
 
         self.static_obstacles = self.get_static_obstacles()
 
-
-        if debug:
-            self.heatmap = np.zeros((self.width, self.width))
+        self.heatmap = np.zeros((self.width, self.width)) # TODO: Remove
 
         self.reset()
 
@@ -97,6 +95,28 @@ class Gridworld_687(object):
                 result += "_"
             result += "\n"
         print(result)
+
+    def debug_rewards(self, r_func, basis, print_r_map=True):
+        states = []
+        for y in range(0,self.width):
+            for x in range(0, self.width):
+                states.append([x,y])
+        
+        states = torch.Tensor(states)
+        r = r_func(basis(states))
+        print(r)
+
+        if print_r_map:
+            action_indexes = torch.argmax(r, dim=1)
+            reward_map = r[torch.arange(action_indexes.shape[0]), action_indexes].view(self.width, self.width)
+            action_map = action_indexes.view(self.width, self.width)
+            print("Reward Map")
+            print(reward_map)
+            print("Action Map")
+            print(action_map)
+            print("Total Visits")
+            print(self.heatmap)
+
 
     # reward values associated with states
     def set_rewards(self):
@@ -183,6 +203,8 @@ class Gridworld_687(object):
             # print(self.curr_pos)
             pass
 
+        self.heatmap[self.curr_pos[1], self.curr_pos[0]] += 1
+        
         return self.curr_state.copy(), reward, self.get_valid_actions(), reached_goal, {'No INFO implemented yet'}
 
     def make_state(self):

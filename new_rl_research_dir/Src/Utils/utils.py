@@ -86,9 +86,9 @@ class TrajectoryBuffer:
         # return self.s[idx], self.a[idx], self.p[idx], self.r[idx] #TODO
         return ids, self.s[idx], self.a[idx], self.p[idx], self.r[idx], self.mask[idx]
 
-    def sample(self, batch_size):
+    def sample(self, batch_size, replace=True):
         count = min(batch_size, self.valid_len)
-        return self._get(np.random.choice(self.valid_len, count))
+        return self._get(np.random.choice(self.valid_len, count, replace=replace))
 
 class DataManager:
     def __init__(self):

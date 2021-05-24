@@ -125,6 +125,10 @@ class Solver:
         # assert self.config.offpolicy or self.config.batch_size <= self.config.T2
 
         for t1 in range(self.config.T1):
+            
+            if not self.config.offpolicy:
+                self.memory.reset()
+
             for t2 in range(self.config.T2):
                 
                 # Get Trajectory
@@ -149,13 +153,11 @@ class Solver:
                 in_g = gamma_func(s_features, a.view(B*H, A)).view(B,H)
                 in_g *= mask
                 
-                agent.optimize(s_features, a, in_r + r, in_g)
-
-                if not self.config.offpolicy:
-                    self.memory.reset()
+                agent.optimize(s_features, a, in_r, in_g) # TODO: Add back r
 
             # TODO: Make different batch sizes
-            ids, s, a, prob, r, mask = self.memory.sample(self.config.batch_size)
+            # print(self.config.batch_size)
+            ids, s, a, prob, r, mask = self.memory.sample(self.config.batch_size, replace=False)
             
             B, H, D = s.shape
             _, _, A = a.shape
@@ -177,7 +179,7 @@ class Solver:
             A_value = 0
             for b in range(B):
                 cumu_in_g = Get_Cumulative_Gamma(in_g[b]).detach()
-                disc_in_r = Get_Discounted_Returns(in_r[b], cumu_in_g, normalize=True).detach()
+                disc_in_r = Get_Discounted_Returns(in_r[b], cumu_in_g, normalize=False).detach()
 
 
                 # TODO: CHECK GRADIENTS
@@ -190,7 +192,7 @@ class Solver:
                 A_value += Approximate_A(phi, cumu_in_g, d_in_r)
 
             # print(H_value.shape, B_value.shape, A_value.shape)
-
+            env.heatmap = np.zeros((env.width, env.width)) # TODO REMOVE THIS
             c_value = 0
             for t3 in range(self.config.T3):
                 total_r, step = self.generate_episode()
@@ -203,17 +205,15 @@ class Solver:
 
                 log_pi, dist_all = agent.policy.get_logprob_dist(s_features, a)
 
-                in_r = reward_func(s_features, a)
-                in_r *= mask
-
                 # TODO: Check that gamma is right w/ equation? Parameterized for C?
                 in_g = gamma_func(s_features, a)
+                in_g[:] = 0.99 #TODO: rename and look over gamma treatment, also config
                 in_g *= mask
                 cumu_in_g = Get_Cumulative_Gamma(in_g).detach()
 
                 phi = calc_grads(agent.policy, log_pi, True).detach()
 
-                disc_r = Get_Discounted_Returns(r, cumu_in_g, normalize=True) #TODO: which gamma to use?
+                disc_r = Get_Discounted_Returns(r, cumu_in_g, normalize=False)
                 c_value += Calculate_C(phi, cumu_in_g, disc_r)
 
                 data_mngr.update_rewards(total_r)
@@ -222,9 +222,10 @@ class Solver:
 
             # Average Results Together
             c_value /= t3
-            H_value /= self.config.batch_size
-            A_value /= self.config.batch_size
-            B_value /= self.config.batch_size
+            H_value /= B
+            A_value /= B
+            B_value /= B
+            # print(c_value, H_value, A_value, B_value)
 
             d_reward_func = - c_value * (A_value.squeeze() / H_value.squeeze())
             d_gamma_func = - c_value * (B_value.squeeze() / H_value.squeeze())
@@ -236,10 +237,13 @@ class Solver:
             # TODO: Make sure right shape
 
             reward_func.fc1.weight.grad = d_reward_func.view(reward_func.fc1.weight.shape).detach()
-            gamma_func.fc1.weight.grad = d_gamma_func.view(gamma_func.fc1.weight.shape).detach()
+            # gamma_func.fc1.weight.grad = d_gamma_func.view(gamma_func.fc1.weight.shape).detach()
 
             reward_func.step()
-            gamma_func.step()
+            # gamma_func.step()
+
+            # TODO: REMOVE
+            env.debug_rewards(reward_func, basis, print_r_map=True)
 
             if t1 == self.config.T1 - 1:
                 data_mngr.update_returns()
@@ -263,6 +267,7 @@ def main(nonloaded_config : DictConfig) -> None:
     data_mngr = DataManager()
 
     for i in range(nonloaded_config.num_runs):
+        log.info(f"======= RUN {i} =======")
         solver = Solver(nonloaded_config.config)
         solver.train(data_mngr)
 

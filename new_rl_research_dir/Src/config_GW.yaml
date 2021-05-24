@@ -8,22 +8,22 @@ config:
     _target_: Src.Algorithms.Agent.Reinforce.Reinforce
     policy:
       _target_: Src.Utils.Policy.Categorical
-      lr: .01
+      lr: 0.1
   reward_func:
     _target_: Src.Algorithms.Reward.RewardFunc.RewardFunc
-    lr: .01
+    lr: 0.1
   gamma_func:
     _target_: Src.Algorithms.Gamma.GammaFunc.GammaFunc
-    lr: .01
+    lr: 0.1
   name: "my_experiment"
-  offpolicy: True
+  offpolicy: False
   T1: 10
   T2: 100
   T3: 15
   buffer_size: 10000
-  batch_size: 50
+  batch_size: 500000
 seed: 0
-num_runs: 10
-weight_decay: 0.5
+num_runs: 5
+weight_decay: 0.
 
   

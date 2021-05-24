@@ -18,11 +18,16 @@ class RewardFunc(Algorithm):
         self.fc1 = nn.Linear(self.state_dim, self.action_dim, bias=False)
         self.init_optimizer()
 
+    # TODO: Get Auxillary Code From Other Env
+
     # TODO: Only categorical
-    def forward(self, state, action, min=-20, max=20):
-        action_indexes = torch.nonzero(action)
+    def forward(self, state, action=None, min=-20, max=20):
         x = self.fc1(state)
         x = torch.clip(x, min, max)
+        if action is None:
+            return x
+
+        action_indexes = torch.nonzero(action)
         in_r = torch.zeros(state.size()[:-1])
         in_r[action_indexes[:,0]] = x[action_indexes[:,0], action_indexes[:,1]]
         return in_r

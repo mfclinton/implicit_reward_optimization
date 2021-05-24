@@ -207,7 +207,8 @@ def Run_Gridworld_Implicit(T1, T2, T3, approximate, reuse_trajectories):
         total_average_intrinsic_reward = 0
         visited_states = torch.zeros((env.state_space.n))
 
-        for states, actions, real_rewards, log_probs in trajectories:
+        sample_size = min(len(trajectories), 50)
+        for states, actions, real_rewards, log_probs in random.sample(trajectories, sample_size):
             states_matrix = torch.stack(states, dim=0)
             state_actions = onehot_states_to_state_action(states_matrix, actions, env.action_space.n)
 

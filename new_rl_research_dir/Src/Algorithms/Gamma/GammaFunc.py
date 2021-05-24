@@ -25,4 +25,5 @@ class GammaFunc(Algorithm):
         x = torch.clip(x, 0, 1)
         in_g = torch.zeros(state.size()[:-1])
         in_g[action_indexes[:,0]] = x[action_indexes[:,0], action_indexes[:,1]]
+        in_g[:] = 0.99 # TODO: Remove later
         return in_g

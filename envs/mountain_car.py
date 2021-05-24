@@ -114,6 +114,9 @@ class MountainCarEnv(gym.Env):
         if (position == self.min_position and velocity < 0):
             velocity = 0
 
+        # if position == self.min_position:
+        #     print("FINISHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHED")
+
         done = bool(
             (position >= self.goal_position and velocity >= self.goal_velocity) or (self.steps_taken >= self.max_steps)
         )

@@ -9,7 +9,7 @@ class Algorithm(nn.Module):
         # print("LOL HAHAHAHA")
         self.optim = self.optim(self.parameters(), lr=self.lr, weight_decay=self.config.weight_decay)
 
-    def step(self, loss = None, normalize_grad = True):
+    def step(self, loss = None, normalize_grad = False):
         # print(self.optim)
         self.optim.zero_grad()
 
