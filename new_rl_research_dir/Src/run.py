@@ -142,39 +142,24 @@ class Solver:
 
                 # Optimize Agent
                 # batch_size = self.memory.size if self.memory.size < self.config.batch_size else self.config.batch_size
-                ids, s, a, prob, r, mask = self.memory.sample(1)
+                sample = self.memory.sample(1)
+                ids, s, g, prob, r, mask = sample
                 B, H, D = s.shape
                 _, _, A = a.shape
 
-                s_features = basis.forward(s.view(B * H, D))
-                s_features *= mask.view(B*H, 1) #TODO: Check this
-
-                in_r = reward_func(s_features, a.view(B*H, A)).view(B,H)
-                in_r *= mask
-
-                in_g = gamma_func(s_features, a.view(B*H, A)).view(B,H)
-                in_g *= mask
+                s_features, _, in_r, in_g = Process_Sample(sample, basis, agent, reward_func, gamma_func)
                 
                 agent.optimize(s_features, a, in_r, in_g) # TODO: Add back r
 
             # TODO: Make different batch sizes
             # print(self.config.batch_size)
-            ids, s, a, prob, r, mask = self.memory.sample(self.config.batch_size, replace=False)
+            sample = self.memory.sample(self.config.batch_size, replace=False)
+            ids, s, a, prob, r, mask = sample
             
             B, H, D = s.shape
             _, _, A = a.shape
 
-            s_features = basis.forward(s.view(B * H, D))
-            s_features *= mask.view(B*H, 1) #TODO: Check this
-
-            log_pi, dist_all = agent.policy.get_logprob_dist(s_features, a.view(B * H, -1))
-            log_pi = log_pi.view(B, H)
-
-            in_r = reward_func(s_features, a.view(B*H, A)).view(B,H)
-            in_r *= mask
-
-            in_g = gamma_func(s_features, a.view(B*H, A)).view(B,H)
-            in_g *= mask
+            s_features, log_pi, in_r, in_g = Process_Sample(sample, basis, agent, reward_func, gamma_func)
             
             H_value = 0
             B_value = 0
