@@ -16,13 +16,12 @@ config:
     _target_: Src.Algorithms.Gamma.GammaFunc.GammaFunc
     lr: .01
   name: "my_experiment"
-  offpolicy: False
+  offpolicy: True
   T1: 10
-  T2: 200
-  T3: 20
+  T2: 100
+  T3: 15
   buffer_size: 10000
-  batch_size: 5
+  batch_size: 50
 seed: 0
-num_runs: 3
-  
+num_runs: 10
   

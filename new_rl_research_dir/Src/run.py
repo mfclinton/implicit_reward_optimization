@@ -120,14 +120,14 @@ class Solver:
         gamma_func = self.config.gamma_func
 
         # Ensures update in t1 loop
-        assert self.config.offpolicy or self.config.batch_size <= self.config.T2
+        # assert self.config.offpolicy or self.config.batch_size <= self.config.T2
 
         for t1 in range(self.config.T1):
             for t2 in range(self.config.T2):
                 
                 # Get Trajectory
                 # TODO: Check it's okay to generate an initial episode
-                if not self.config.offpolicy or self.memory.episode_ctr < self.config.batch_size:
+                if not self.config.offpolicy or self.memory.episode_ctr < self.config.T2:
                     total_r, step = self.generate_episode()
 
                     data_mngr.update_rewards(total_r)
