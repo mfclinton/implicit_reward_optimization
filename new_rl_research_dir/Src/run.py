@@ -143,7 +143,7 @@ class Solver:
                 # Optimize Agent
                 # batch_size = self.memory.size if self.memory.size < self.config.batch_size else self.config.batch_size
                 sample = self.memory.sample(1)
-                ids, s, a, prob, r, mask = sample
+                _, s, a, _, r, _ = sample
                 B, H, D = s.shape
                 _, _, A = a.shape
 
@@ -154,7 +154,7 @@ class Solver:
             # TODO: Make different batch sizes
             # print(self.config.batch_size)
             sample = self.memory.sample(self.config.batch_size, replace=False)
-            ids, s, a, prob, r, mask = sample
+            _, s, a, _, r, mask = sample
             
             B, H, D = s.shape
             _, _, A = a.shape
@@ -169,6 +169,7 @@ class Solver:
                 disc_in_r = Get_Discounted_Returns(in_r[b], cumu_in_g, normalize=False).detach()
 
                 # TODO: CHECK GRADIENTS
+                # print(s_features[:5,:])
                 phi = calc_grads(agent.policy, log_pi[b], True).detach()
                 d_in_r = calc_grads(reward_func, in_r[b], True).detach()
                 d_in_g = calc_grads(gamma_func, in_g[b], True).detach()
@@ -194,6 +195,7 @@ class Solver:
                 # TODO: Check that gamma is right w/ equation? Parameterized for C?
                 gamma = torch.full((H,), self.config.gamma)
                 gamma *= mask
+                
                 cumu_gamma = Get_Cumulative_Gamma(gamma).detach() * mask
 
                 phi = calc_grads(agent.policy, log_pi, True).detach()
@@ -220,7 +222,6 @@ class Solver:
 
             # print(reward_func.fc1.weight.shape, d_reward_func.shape)
             # TODO: Make sure right shape
-
             reward_func.fc1.weight.grad = d_reward_func.view(reward_func.fc1.weight.shape).detach()
             # gamma_func.fc1.weight.grad = d_gamma_func.view(gamma_func.fc1.weight.shape).detach()
 

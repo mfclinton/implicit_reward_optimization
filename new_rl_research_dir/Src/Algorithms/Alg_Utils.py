@@ -67,7 +67,5 @@ def calc_grads(model, values, retain_graph=True):
 
     # print(len(grads), grads[0].shape)
     grads = torch.stack(grads, dim=0)
-    # print(grads.shape)
-    # 1/0
 
     return grads

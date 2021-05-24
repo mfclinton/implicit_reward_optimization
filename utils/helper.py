@@ -77,7 +77,8 @@ def get_param_gradient(model, values, get_sec_grads = False):
         #     sec_grads.append(dd_v)
 
     grads = torch.stack(grads, dim=0)
-    
+    # print(grads.nonzero()[:12,:])
+    # 1/0
 
     if(get_sec_grads):
         # (T, num_parameters(model), num_parameters(model))

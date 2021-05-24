@@ -10,10 +10,9 @@ class Algorithm(nn.Module):
         self.optim = self.optim(self.parameters(), lr=self.lr, weight_decay=self.config.weight_decay)
 
     def step(self, loss = None, normalize_grad = False):
-        # print(self.optim)
-        self.optim.zero_grad()
 
         if loss != None:
+            self.optim.zero_grad()
             loss.backward()
 
         if normalize_grad:

@@ -17,7 +17,7 @@ config:
     lr: 0.1
   gamma: 0.99
   name: "my_experiment"
-  offpolicy: False
+  offpolicy: True
   T1: 10
   T2: 100
   T3: 15
