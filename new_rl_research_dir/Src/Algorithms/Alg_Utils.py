@@ -38,7 +38,8 @@ def Get_Discounted_Returns(rewards, cumu_gamma, normalize=False, eps=1e-4):
         returns = (returns - returns.mean()) / (returns.std() + eps)
     return returns
 
-def Process_Sample():
+def Process_Sample(sample, basis, agent, reward_func, gamma_func):
+    ids, s, a, prob, r, mask = sample
     B, H, D = s.shape
     _, _, A = a.shape
 
@@ -53,6 +54,8 @@ def Process_Sample():
 
     in_g = gamma_func(s_features, a.view(B*H, A)).view(B,H)
     in_g *= mask
+
+    return s_features, log_pi, in_r, in_g
 
 def calc_grads(model, values, retain_graph=True):
     grads = []
