@@ -28,7 +28,8 @@ class Config:
     restore=False,
     method="file",
     buffer_size=10000,
-    batch_size=10):
+    batch_size=10,
+    weight_decay=0.5):
         self.env = env
         # print(env)
         self.basis = basis
@@ -42,6 +43,7 @@ class Config:
         self.T3 = T3
         self.buffer_size = buffer_size
         self.batch_size = batch_size
+        self.weight_decay = weight_decay
 
 
 class Solver:
@@ -97,8 +99,8 @@ class Solver:
         step, total_r = 0, 0
         done = False
         while not done:
-            state_feature = torch.tensor(state, requires_grad=False)
-            action, prob, dist = agent.policy.get_action_w_prob_dist(basis.forward(state_feature.view(1, -1)))
+            state_tensor = torch.tensor(state, requires_grad=False)
+            action, prob, dist = agent.policy.get_action_w_prob_dist(basis.forward(state_tensor.view(1, -1)))
             
             # TODO: Fix valid actions
             new_state, reward, valid_actions, done, info = env.step(action=action)
@@ -127,31 +129,30 @@ class Solver:
                 
                 # Get Trajectory
                 # TODO: Check it's okay to generate an initial episode
-                if not self.config.offpolicy or self.memory.episode_ctr < self.config.T2:
+                if not self.config.offpolicy or self.memory.episode_ctr < self.config.T3:
                     total_r, step = self.generate_episode()
 
                     data_mngr.update_rewards(total_r)
 
                 # Optimize Agent
                 # batch_size = self.memory.size if self.memory.size < self.config.batch_size else self.config.batch_size
-                if self.config.batch_size <= self.memory.episode_ctr:
-                    ids, s, a, prob, r, mask = self.memory.sample(1)
-                    B, H, D = s.shape
-                    _, _, A = a.shape
+                ids, s, a, prob, r, mask = self.memory.sample(1)
+                B, H, D = s.shape
+                _, _, A = a.shape
 
-                    s_features = basis.forward(s.view(B * H, D))
-                    s_features *= mask.view(B*H, 1) #TODO: Check this
+                s_features = basis.forward(s.view(B * H, D))
+                s_features *= mask.view(B*H, 1) #TODO: Check this
 
-                    in_r = reward_func(s_features, a.view(B*H, A)).view(B,H)
-                    in_r *= mask
+                in_r = reward_func(s_features, a.view(B*H, A)).view(B,H)
+                in_r *= mask
 
-                    in_g = gamma_func(s_features, a.view(B*H, A)).view(B,H)
-                    in_g *= mask
-                    
-                    agent.optimize(s_features, a, r, 1.0)
+                in_g = gamma_func(s_features, a.view(B*H, A)).view(B,H)
+                in_g *= mask
+                
+                agent.optimize(s_features, a, in_r + r, in_g)
 
-                    if not self.config.offpolicy:
-                        self.memory.reset()
+                if not self.config.offpolicy:
+                    self.memory.reset()
 
             # TODO: Make different batch sizes
             ids, s, a, prob, r, mask = self.memory.sample(self.config.batch_size)
@@ -184,7 +185,7 @@ class Solver:
                 d_in_r = calc_grads(reward_func, in_r[b], True).detach()
                 d_in_g = calc_grads(gamma_func, in_g[b], True).detach()
 
-                H_value += Approximate_H(phi, disc_in_r)
+                H_value += Approximate_H(phi, disc_in_r, self.config.weight_decay)
                 B_value += Calculate_B(phi, d_in_g, in_r[b])
                 A_value += Approximate_A(phi, cumu_in_g, d_in_r)
 
@@ -205,6 +206,7 @@ class Solver:
                 in_r = reward_func(s_features, a)
                 in_r *= mask
 
+                # TODO: Check that gamma is right w/ equation? Parameterized for C?
                 in_g = gamma_func(s_features, a)
                 in_g *= mask
                 cumu_in_g = Get_Cumulative_Gamma(in_g).detach()
@@ -232,6 +234,7 @@ class Solver:
 
             # print(reward_func.fc1.weight.shape, d_reward_func.shape)
             # TODO: Make sure right shape
+
             reward_func.fc1.weight.grad = d_reward_func.view(reward_func.fc1.weight.shape).detach()
             gamma_func.fc1.weight.grad = d_gamma_func.view(gamma_func.fc1.weight.shape).detach()
 

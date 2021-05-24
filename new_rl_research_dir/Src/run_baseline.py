@@ -25,7 +25,8 @@ class Config:
     restore=False,
     method="file",
     buffer_size=10000,
-    batch_size=10):
+    batch_size=10,
+    weight_decay=0.5):
         self.env = env
         # print(env)
         self.basis = basis
@@ -37,6 +38,7 @@ class Config:
         self.max_episodes = max_episodes
         self.buffer_size = buffer_size
         self.batch_size = batch_size
+        self.weight_decay = weight_decay
 
 
 class Solver:
@@ -85,8 +87,8 @@ class Solver:
         basis = self.config.basis
 
         agent = self.config.agent
-        reward_func = self.config.reward_func
-        gamma_func = self.config.gamma_func
+        # reward_func = self.config.reward_func
+        # gamma_func = self.config.gamma_func
 
         start_ep = 0
 
@@ -94,13 +96,14 @@ class Solver:
         t0 = time()
         for episode in range(start_ep, self.config.max_episodes):
 
-            state, valid_actions = self.reset() #TODO: FIX RESETTING
+            self.memory.next() #TODO: check if correct
+            state, valid_actions = env.reset() #TODO: FIX RESETTING
 
             step, total_r = 0, 0
             done = False
             while not done:
-                state_feature = torch.tensor(state, requires_grad=False)
-                action, prob, dist = agent.policy.get_action_w_prob_dist(basis.forward(state_feature.view(1, -1)))
+                state_tensor = torch.tensor(state, requires_grad=False)
+                action, prob, dist = agent.policy.get_action_w_prob_dist(basis.forward(state_tensor.view(1, -1)))
                 
                 new_state, reward, valid_actions, done, info = env.step(action=action)
                 
@@ -153,7 +156,7 @@ log = logging.getLogger(__name__)
 # @hydra.main(config_path=".", config_name="config")
 @hydra.main(config_path=".", config_name="config_GW")
 def main(nonloaded_config : DictConfig) -> None:
-
+    print("LOL")
     # Set Seed
     # TODO: Propagate seeding in init functions, so can seed in config
     seed = nonloaded_config.seed

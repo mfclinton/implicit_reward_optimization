@@ -11,6 +11,7 @@ class RewardFunc(Algorithm):
         self.lr = lr
 
     def init(self, config):
+        self.config = config
         self.state_dim = config.basis.feature_dim
         self.action_dim = config.env.action_space.n
 

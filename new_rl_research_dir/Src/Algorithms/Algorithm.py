@@ -7,7 +7,7 @@ class Algorithm(nn.Module):
 
     def init_optimizer(self):
         # print("LOL HAHAHAHA")
-        self.optim = self.optim(self.parameters(), lr=self.lr)
+        self.optim = self.optim(self.parameters(), lr=self.lr, weight_decay=self.config.weight_decay)
 
     def step(self, loss = None, normalize_grad = True):
         # print(self.optim)

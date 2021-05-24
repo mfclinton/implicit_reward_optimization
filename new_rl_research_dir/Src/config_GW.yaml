@@ -24,4 +24,6 @@ config:
   batch_size: 50
 seed: 0
 num_runs: 10
+weight_decay: 0.5
+
   

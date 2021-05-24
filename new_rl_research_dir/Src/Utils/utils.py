@@ -123,6 +123,7 @@ class DataManager:
         m, se = self.process_returns()
         self.save_csv(m, se)
         self.save_plot(m, se)
+        self.save_rolling_plot(m, se)
 
     def save_csv(self, m, se):
         df = pd.DataFrame(np.stack((m, se), axis=1), columns=["Mean", "Standard Error"])
@@ -133,5 +134,22 @@ class DataManager:
         plt.errorbar(x, m, se, linestyle='None', marker='^')
         plt.ylabel("Total Reward")
         plt.savefig(f"{self.result_path}/graph.png")
+
+    def save_rolling_plot(self, m, se):
+        x = np.arange(m.shape[0])
+        m = pd.DataFrame(data=m)
+        se = pd.DataFrame(data=se)
+        rolling_se = se.rolling(100, min_periods=1).mean().to_numpy().squeeze()
+        rolling_m = m.rolling(100, min_periods=1).mean().to_numpy().squeeze()
+        print(rolling_m.shape, rolling_se.shape)
+        plt.errorbar(x, rolling_m, rolling_se, linestyle='None', marker='^')
+        plt.ylabel("Total Reward")
+        print(self.result_path)
+        plt.savefig(f"{self.result_path}/rolling_graph.png")
+
+
+    def save_3d_reward_plot(self, m):
+        pass
+
 
 

@@ -10,10 +10,12 @@ class GammaFunc(Algorithm):
         self.lr = lr
 
     def init(self, config):
+        self.config = config
         self.state_dim = config.basis.feature_dim
         self.action_dim = config.env.action_space.n
 
         self.fc1 = nn.Linear(self.state_dim, self.action_dim, bias=False)
+        self.fc1.weight.data.fill_(1.0)
         self.init_optimizer()
 
     # TODO: Only categorical
