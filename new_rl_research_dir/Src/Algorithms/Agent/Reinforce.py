@@ -33,6 +33,12 @@ class Reinforce(Agent):
     # Optimize Agent
     # TODO: TEMP GAMMA
     def optimize(self, s_features, a, r, gamma=1.0):
+        if not torch.is_tensor(gamma):
+            gamma = torch.full_like(r, gamma)
+        
+        r = r.detach()
+        gamma = gamma.detach()
+
         B, H, A = a.shape
 
         # State Values for Baseline
@@ -45,7 +51,7 @@ class Reinforce(Agent):
         # TODO: Make sure it doesnt modify
         returns = r
         for i in range(H-2, -1, -1):
-            returns[:, i] += returns[:, i+1] * gamma
+            returns[:, i] += returns[:, i+1] * gamma[:, i]
 
         loss = 0
         # log_pi_return = torch.sum(log_pi * (returns - state_values.detach()), dim=-1, keepdim=True)

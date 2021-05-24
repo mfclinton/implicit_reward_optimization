@@ -18,7 +18,6 @@ class Categorical(Policy):
         super(Categorical, self).__init__()
         self.optim = optim
         self.lr = lr
-        print("SSSSSSSSSSSSSSSSSSSSSSSSSSs")
 
     def init(self, config, action_dim=None):
         super(Categorical, self).init(config)
@@ -27,7 +26,7 @@ class Categorical(Policy):
         if action_dim is not None:
             self.action_dim = action_dim
             
-        self.fc1 = nn.Linear(self.state_dim, self.action_dim)
+        self.fc1 = nn.Linear(self.state_dim, self.action_dim, bias=False)
         self.init_optimizer()
 
     def forward(self, state):
@@ -46,10 +45,10 @@ class Categorical(Policy):
 
         return action, probs[action_idx], probs
 
-    def get_prob(self, state, action):
-        x = self.forward(state)
-        dist = F.softmax(x, -1)
-        return dist.gather(1, action), dist
+    # def get_prob(self, state, action):
+    #     x = self.forward(state)
+    #     dist = F.softmax(x, -1)
+    #     return dist.gather(1, action), dist
 
     def get_logprob_dist(self, state, action):
         action = action.long() #TODO: do better

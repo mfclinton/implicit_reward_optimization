@@ -7,6 +7,7 @@ from time import time
 import torch
 import numpy as np
 from Src.Utils.utils import TrajectoryBuffer, DataManager
+from Src.Algorithms.Alg_Utils import *
 import sys
 import random
 import logging
@@ -21,7 +22,7 @@ class Config:
     name="default",
     offpolicy=False,
     T1=10,
-    max_episodes=100,
+    T2=100,
     T3=20,
     log_path=r"/media/mfclinton/647875097874DAEE/Users/mfcli/Documents/School/S21/Research/rl_research/new_rl_research_dir/logs",
     restore=False,
@@ -37,7 +38,7 @@ class Config:
         self.name = name
         self.offpolicy = offpolicy
         self.T1 = T1
-        self.max_episodes = max_episodes
+        self.T2 = T2
         self.T3 = T3
         self.buffer_size = buffer_size
         self.batch_size = batch_size
@@ -90,6 +91,7 @@ class Solver:
         agent = self.config.agent
 
         # state, valid_actions = self.reset() #TODO: FIX RESETTING
+        self.memory.next() #TODO: check if correct
         state, valid_actions = env.reset() #TODO: FIX RESETTING
 
         step, total_r = 0, 0
@@ -117,51 +119,133 @@ class Solver:
         reward_func = self.config.reward_func
         gamma_func = self.config.gamma_func
 
+        # Ensures update in t1 loop
+        assert self.config.offpolicy or self.config.batch_size <= self.config.T2
+
         for t1 in range(self.config.T1):
-            for episode in range(self.config.max_episodes):
+            for t2 in range(self.config.T2):
                 
                 # Get Trajectory
-                if not self.config.offpolicy:
+                # TODO: Check it's okay to generate an initial episode
+                if not self.config.offpolicy or self.memory.episode_ctr < self.config.batch_size:
                     total_r, step = self.generate_episode()
 
                     data_mngr.update_rewards(total_r)
 
-                    if episode == self.config.max_episodes - 1:
-                        data_mngr.update_returns()
-
                 # Optimize Agent
                 # batch_size = self.memory.size if self.memory.size < self.config.batch_size else self.config.batch_size
                 if self.config.batch_size <= self.memory.episode_ctr:
-                    ids, s, a, prob, r, mask = self.memory.sample(self.config.batch_size)
+                    ids, s, a, prob, r, mask = self.memory.sample(1)
                     B, H, D = s.shape
                     _, _, A = a.shape
 
                     s_features = basis.forward(s.view(B * H, D))
                     s_features *= mask.view(B*H, 1) #TODO: Check this
 
-                    # MATT TODO: LEFT HERE, RUN THROUGH REWARD
+                    in_r = reward_func(s_features, a.view(B*H, A)).view(B,H)
+                    in_r *= mask
 
-                    agent.optimize(s_features, a, r)
+                    in_g = gamma_func(s_features, a.view(B*H, A)).view(B,H)
+                    in_g *= mask
+                    
+                    agent.optimize(s_features, a, r, 1.0)
 
                     if not self.config.offpolicy:
                         self.memory.reset()
 
-                
-                # log.info(f"Episode: {episode} | Total Reward: {total_r} | Length: {step} | Avg Reward: {total_r / step}")
+            # TODO: Make different batch sizes
+            ids, s, a, prob, r, mask = self.memory.sample(self.config.batch_size)
             
-            # Update H, b, and A
+            B, H, D = s.shape
+            _, _, A = a.shape
 
+            s_features = basis.forward(s.view(B * H, D))
+            s_features *= mask.view(B*H, 1) #TODO: Check this
+
+            log_pi, dist_all = agent.policy.get_logprob_dist(s_features, a.view(B * H, -1))
+            log_pi = log_pi.view(B, H)
+
+            in_r = reward_func(s_features, a.view(B*H, A)).view(B,H)
+            in_r *= mask
+
+            in_g = gamma_func(s_features, a.view(B*H, A)).view(B,H)
+            in_g *= mask
+            
+            H_value = 0
+            B_value = 0
+            A_value = 0
+            for b in range(B):
+                cumu_in_g = Get_Cumulative_Gamma(in_g[b]).detach()
+                disc_in_r = Get_Discounted_Returns(in_r[b], cumu_in_g, normalize=True).detach()
+
+
+                # TODO: CHECK GRADIENTS
+                phi = calc_grads(agent.policy, log_pi[b], True).detach()
+                d_in_r = calc_grads(reward_func, in_r[b], True).detach()
+                d_in_g = calc_grads(gamma_func, in_g[b], True).detach()
+
+                H_value += Approximate_H(phi, disc_in_r)
+                B_value += Calculate_B(phi, d_in_g, in_r[b])
+                A_value += Approximate_A(phi, cumu_in_g, d_in_r)
+
+            # print(H_value.shape, B_value.shape, A_value.shape)
+
+            c_value = 0
             for t3 in range(self.config.T3):
                 total_r, step = self.generate_episode()
+                ids, s, a, prob, r, mask = self.memory._get(self.memory.buffer_pos)
+                H, D = s.shape
+                _, A = a.shape
 
-                if (t3 == self.config.T3 - 1):
-                    data_mngr.update_returns()
+                s_features = basis.forward(s)
+                s_features *= mask.view(H, 1) #TODO: Check this
+
+                log_pi, dist_all = agent.policy.get_logprob_dist(s_features, a)
+
+                in_r = reward_func(s_features, a)
+                in_r *= mask
+
+                in_g = gamma_func(s_features, a)
+                in_g *= mask
+                cumu_in_g = Get_Cumulative_Gamma(in_g).detach()
+
+                phi = calc_grads(agent.policy, log_pi, True).detach()
+
+                disc_r = Get_Discounted_Returns(r, cumu_in_g, normalize=True) #TODO: which gamma to use?
+                c_value += Calculate_C(phi, cumu_in_g, disc_r)
+
+                data_mngr.update_rewards(total_r)
+                
+                log.info(f"T1: {t1} | T3: {t3} | Total Reward: {total_r} | Length: {step} | Avg Reward: {total_r / step}")
+
+            # Average Results Together
+            c_value /= t3
+            H_value /= self.config.batch_size
+            A_value /= self.config.batch_size
+            B_value /= self.config.batch_size
+
+            d_reward_func = - c_value * (A_value.squeeze() / H_value.squeeze())
+            d_gamma_func = - c_value * (B_value.squeeze() / H_value.squeeze())
+
+            reward_func.optim.zero_grad()
+            gamma_func.optim.zero_grad()
+
+            # print(reward_func.fc1.weight.shape, d_reward_func.shape)
+            # TODO: Make sure right shape
+            reward_func.fc1.weight.grad = d_reward_func.view(reward_func.fc1.weight.shape).detach()
+            gamma_func.fc1.weight.grad = d_gamma_func.view(gamma_func.fc1.weight.shape).detach()
+
+            reward_func.step()
+            gamma_func.step()
+
+            if t1 == self.config.T1 - 1:
+                data_mngr.update_returns()
 
             
 log = logging.getLogger(__name__)
     
-# @hydra.main(config_path=".", config_name="config")
-@hydra.main(config_path=".", config_name="config_GW")
+@hydra.main(config_path=".", config_name="config")
+# @hydra.main(config_path=".", config_name="config_GW")
 def main(nonloaded_config : DictConfig) -> None:
 
     # Set Seed

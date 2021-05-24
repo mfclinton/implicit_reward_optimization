@@ -36,7 +36,7 @@ class TrajectoryBuffer:
         self.timestep_ctr = 0
         self.buffer_pos = -1
         self.valid_len = 0
-        print("MEMORY RESET")
+        # print("MEMORY RESET")
 
     def next(self):
         self.episode_ctr += 1

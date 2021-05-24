@@ -14,14 +14,15 @@ config:
     lr: .01
   gamma_func:
     _target_: Src.Algorithms.Gamma.GammaFunc.GammaFunc
+    lr: .01
   name: "my_experiment"
   offpolicy: False
   T1: 10
-  max_episodes: 100
+  T2: 200
   T3: 20
   buffer_size: 10000
-  batch_size: 10
+  batch_size: 5
 seed: 0
-num_runs: 1
+num_runs: 3
   
   
