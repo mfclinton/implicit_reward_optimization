@@ -38,6 +38,22 @@ def Get_Discounted_Returns(rewards, cumu_gamma, normalize=False, eps=1e-4):
         returns = (returns - returns.mean()) / (returns.std() + eps)
     return returns
 
+def Process_Sample():
+    B, H, D = s.shape
+    _, _, A = a.shape
+
+    s_features = basis.forward(s.view(B * H, D))
+    s_features *= mask.view(B*H, 1) #TODO: Check this
+
+    log_pi, dist_all = agent.policy.get_logprob_dist(s_features, a.view(B * H, -1))
+    log_pi = log_pi.view(B, H)
+
+    in_r = reward_func(s_features, a.view(B*H, A)).view(B,H)
+    in_r *= mask
+
+    in_g = gamma_func(s_features, a.view(B*H, A)).view(B,H)
+    in_g *= mask
+
 def calc_grads(model, values, retain_graph=True):
     grads = []
     for v in values:

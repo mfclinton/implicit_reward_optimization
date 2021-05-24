@@ -19,6 +19,7 @@ class Config:
     agent, 
     reward_func, 
     gamma_func,
+    gamma=0.99,
     name="default",
     offpolicy=False,
     T1=10,
@@ -36,6 +37,7 @@ class Config:
         self.agent = agent
         self.reward_func = reward_func
         self.gamma_func = gamma_func
+        self.gamma = gamma
         self.name = name
         self.offpolicy = offpolicy
         self.T1 = T1
@@ -206,15 +208,14 @@ class Solver:
                 log_pi, dist_all = agent.policy.get_logprob_dist(s_features, a)
 
                 # TODO: Check that gamma is right w/ equation? Parameterized for C?
-                in_g = gamma_func(s_features, a)
-                in_g[:] = 0.99 #TODO: rename and look over gamma treatment, also config
-                in_g *= mask
-                cumu_in_g = Get_Cumulative_Gamma(in_g).detach()
+                gamma = torch.full((H,), self.config.gamma)
+                gamma *= mask
+                cumu_gamma = Get_Cumulative_Gamma(gamma).detach()
 
                 phi = calc_grads(agent.policy, log_pi, True).detach()
 
-                disc_r = Get_Discounted_Returns(r, cumu_in_g, normalize=False)
-                c_value += Calculate_C(phi, cumu_in_g, disc_r)
+                disc_r = Get_Discounted_Returns(r, cumu_gamma, normalize=False)
+                c_value += Calculate_C(phi, cumu_gamma, disc_r)
 
                 data_mngr.update_rewards(total_r)
                 
