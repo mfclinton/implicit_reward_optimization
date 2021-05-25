@@ -16,6 +16,8 @@ class RewardFunc(Algorithm):
         self.action_dim = config.env.action_space.n
 
         self.fc1 = nn.Linear(self.state_dim, self.action_dim, bias=False)
+        self.fc1.weight.data.fill_(0.0)
+        print("INITIALIZE REWARD FUNCTION")
         self.init_optimizer()
 
     # TODO: Get Auxillary Code From Other Env

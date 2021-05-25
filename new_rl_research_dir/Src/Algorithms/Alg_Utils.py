@@ -46,15 +46,18 @@ def Process_Sample(sample, basis, agent, reward_func, gamma_func):
     s_features = basis.forward(s.view(B * H, D))
     s_features *= mask.view(B*H, 1) #TODO: Check this
 
-    log_pi, dist_all = agent.policy.get_logprob_dist(s_features, a.view(B * H, -1))
-    log_pi = log_pi.view(B, H)
+    log_pi, dist_all = agent.policy.get_logprob_dist(s_features, a.view(B * H, A))
+    log_pi = log_pi.view(B, H) * mask
+    # print(log_pi.view(-1).nonzero().size(), log_pi.size(), "loggg Mate")
 
     in_r = reward_func(s_features, a.view(B*H, A)).view(B,H)
     in_r *= mask
+    # print(in_r.nonzero().size(), in_r.size(), "reward Mate")
     # print(in_r, r)
 
     in_g = gamma_func(s_features, a.view(B*H, A)).view(B,H)
     in_g *= mask
+    # print(in_g.nonzero().size(), in_g.size(), "gamma Mate")
 
     return s_features, log_pi, in_r, in_g
 

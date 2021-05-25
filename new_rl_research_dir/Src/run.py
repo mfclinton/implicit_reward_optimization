@@ -137,19 +137,26 @@ class Solver:
                 # TODO: Check it's okay to generate an initial episode
                 if not self.config.offpolicy or self.memory.episode_ctr < self.config.T3:
                     total_r, step = self.generate_episode()
-
+                    sample = self.memory._get([self.memory.buffer_pos])
                     data_mngr.update_rewards(total_r)
+                else:
+                    sample = self.memory.sample(1) 
 
                 # Optimize Agent
                 # batch_size = self.memory.size if self.memory.size < self.config.batch_size else self.config.batch_size
-                sample = self.memory.sample(1)
                 _, s, a, _, r, _ = sample
                 B, H, D = s.shape
                 _, _, A = a.shape
 
                 s_features, _, in_r, in_g = Process_Sample(sample, basis, agent, reward_func, gamma_func)
-                
+
                 agent.optimize(s_features, a, in_r, in_g) # TODO: Add back r
+
+                total_r = r.sum()
+                total_in_r = in_r.sum()
+                log.info(f"T2: {t1} | T2: {t2} | Total Reward: {total_r} | Length: {step} | Avg Reward: {total_r / step}")
+                log.info(f"T2: {t1} | T2: {t2} | Total Internal Reward: {total_in_r} | Length: {step} | Avg Internal Reward: {total_in_r / step}")
+                data_mngr.update_internal_rewards(total_in_r)
 
             # TODO: Make different batch sizes
             # print(self.config.batch_size)
@@ -183,16 +190,19 @@ class Solver:
             c_value = 0
             for t3 in range(self.config.T3):
                 total_r, step = self.generate_episode()
-                ids, s, a, prob, r, mask = self.memory._get(self.memory.buffer_pos)
-                H, D = s.shape
-                _, A = a.shape
+                sample = self.memory._get([self.memory.buffer_pos])
+                _, s, a, _, r, mask = sample
+            
+                B, H, D = s.shape #Note: B = 1
+                _, _, A = a.shape
 
-                s_features = basis.forward(s)
-                s_features *= mask.view(H, 1) #TODO: Check this
+                s_features, log_pi, in_r, in_g = Process_Sample(sample, basis, agent, reward_func, gamma_func)
 
-                log_pi, dist_all = agent.policy.get_logprob_dist(s_features, a)
+                log_pi = log_pi.squeeze()
+                in_r = in_r.squeeze()
+                in_g = in_g.squeeze()
+                mask = mask.squeeze()
 
-                # TODO: Check that gamma is right w/ equation? Parameterized for C?
                 gamma = torch.full((H,), self.config.gamma)
                 gamma *= mask
                 
@@ -206,6 +216,7 @@ class Solver:
                 data_mngr.update_rewards(total_r)
                 
                 log.info(f"T1: {t1} | T3: {t3} | Total Reward: {total_r} | Length: {step} | Avg Reward: {total_r / step}")
+                log.info(f"T1: {t1} | T3: {t3} | Total Internal Reward: {in_r.sum()} | Length: {step} | Avg Internal Reward: {in_r.sum() / step}")
 
             # Average Results Together
             c_value /= self.config.T3
@@ -234,6 +245,7 @@ class Solver:
 
             if t1 == self.config.T1 - 1:
                 data_mngr.update_returns()
+                data_mngr.update_internal_returns(total_in_r)
 
             
 log = logging.getLogger(__name__)

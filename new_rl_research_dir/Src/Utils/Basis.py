@@ -34,7 +34,7 @@ class OneHot_Basis(Basis):
 
     def forward(self, state):
         N, _ = state.size()
-        idx = (state[:,:1] + self.width * state[:,1:]).long() #TODO do better
+        idx = (state[:,:1] + self.width * state[:,1:]).long() #TODO do better, Assumes a width parameter
 
         output = torch.zeros((N, self.feature_dim)) #TODO: PRE ALLOCATE?
 

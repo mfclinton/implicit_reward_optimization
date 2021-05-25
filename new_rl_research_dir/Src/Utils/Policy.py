@@ -56,7 +56,7 @@ class Categorical(Policy):
         x = self.forward(state)                                                              # BxA
         log_dist = F.log_softmax(x, -1)
         
-        action_indexes = torch.nonzero(action)
+        action_indexes = torch.nonzero(action) #TODO: Assumes Categorical
         log_pi = torch.zeros(x.size()[:-1])
         log_pi[action_indexes[:,0]] = log_dist[action_indexes[:,0], action_indexes[:,1]]
 

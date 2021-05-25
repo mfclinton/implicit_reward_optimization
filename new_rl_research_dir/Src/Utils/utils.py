@@ -102,17 +102,25 @@ class DataManager:
 
     def reset(self):
         self.rewards = []
+        self.internal_rewards = []
         self.returns = []
+        self.internal_returns = []
 
     def update_rewards(self, reward):
         self.rewards.append(reward)
+
+    def update_internal_rewards(self, internal_reward):
+        self.internal_rewards.append(internal_reward)
 
     def update_returns(self):
         self.returns.append(self.rewards)
         self.rewards = []
 
-    def process_returns(self):
-        np_returns = np.array(self.returns)
+    def update_internal_returns(self):
+        self.internal_returns.append(self.internal_rewards)
+
+    def process_returns(self, returns):
+        np_returns = np.array(returns)
 
         m = np.mean(np_returns, axis=0)
         se = stats.sem(np_returns, axis=0)
@@ -120,22 +128,27 @@ class DataManager:
         return m, se
 
     def save(self):
-        m, se = self.process_returns()
-        self.save_csv(m, se)
-        self.save_plot(m, se)
-        self.save_rolling_plot(m, se)
+        m, se = self.process_returns(self.returns)
+        self.save_csv(m, se, "r")
+        self.save_plot(m, se, "r")
+        self.save_rolling_plot(m, se, "r")
 
-    def save_csv(self, m, se):
+        i_m, i_se = self.process_returns(self.internal_returns)
+        self.save_csv(i_m, i_se, "in_r")
+        self.save_plot(i_m, i_se, "in_r")
+        self.save_rolling_plot(i_m, i_se, "in_r")
+
+    def save_csv(self, m, se, name=""):
         df = pd.DataFrame(np.stack((m, se), axis=1), columns=["Mean", "Standard Error"])
-        df.to_csv(f"{self.result_path}/data.csv", index=False)
+        df.to_csv(f"{self.result_path}/{name}_data.csv", index=False)
 
-    def save_plot(self, m, se):
+    def save_plot(self, m, se, name=""):
         x = np.arange(m.shape[0])
         plt.errorbar(x, m, se, linestyle='None', marker='^')
         plt.ylabel("Total Reward")
-        plt.savefig(f"{self.result_path}/graph.png")
+        plt.savefig(f"{self.result_path}/{name}_graph.png")
 
-    def save_rolling_plot(self, m, se):
+    def save_rolling_plot(self, m, se, name=""):
         x = np.arange(m.shape[0])
         m = pd.DataFrame(data=m)
         se = pd.DataFrame(data=se)
@@ -145,7 +158,7 @@ class DataManager:
         plt.errorbar(x, rolling_m, rolling_se, linestyle='None', marker='^')
         plt.ylabel("Total Reward")
         print(self.result_path)
-        plt.savefig(f"{self.result_path}/rolling_graph.png")
+        plt.savefig(f"{self.result_path}/{name}_rolling_graph.png")
 
 
     def save_3d_reward_plot(self, m):
