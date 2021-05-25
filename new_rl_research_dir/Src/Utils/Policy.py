@@ -53,9 +53,7 @@ class Categorical(Policy):
     def get_logprob_dist(self, state, action):
         action = action.long() #TODO: do better
 
-        # 1/0
         x = self.forward(state)                                                              # BxA
-        # print(x)
         log_dist = F.log_softmax(x, -1)
         
         action_indexes = torch.nonzero(action)

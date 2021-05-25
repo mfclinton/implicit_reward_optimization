@@ -24,7 +24,7 @@ class Gridworld_687(object):
 
         self.max_steps = max_steps
         self.step_reward = 0
-        self.timeout_reward = -10
+        self.timeout_reward = -50
         self.step_unit = 1
         self.repeat = 1
 
@@ -166,6 +166,7 @@ class Gridworld_687(object):
 
         term = self.is_terminal()
         if term:
+            print("---------------", self.curr_pos)
             return self.curr_state, self.timeout_reward, self.valid_actions, term, {'No INFO implemented yet'}
 
         reward += self.step_reward
@@ -194,7 +195,7 @@ class Gridworld_687(object):
 
         reached_goal = self.is_terminal()
         if reached_goal:
-            transition = False
+            transition = True
         
         if transition:
             self.curr_state = self.make_state()
@@ -270,10 +271,8 @@ class Gridworld_687(object):
 
     def is_terminal(self):
         if self.in_region(self.curr_pos, self.G2):
-            # print(self.curr_pos, "TEEEEEEEEEEEEEEEEEEEEEERMINAL")
             return 1
         elif self.steps_taken >= self.max_steps:
-            # print("EXCEED")
             return 2
         else:
             return False

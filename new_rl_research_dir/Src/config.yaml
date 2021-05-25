@@ -24,8 +24,8 @@ config:
   T3: 20
   buffer_size: 10000
   batch_size: 100
+  weight_decay: 0.0
 seed: 0
 num_runs: 10
-weight_decay: 0.5
   
   

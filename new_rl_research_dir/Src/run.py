@@ -30,7 +30,7 @@ class Config:
     method="file",
     buffer_size=10000,
     batch_size=10,
-    weight_decay=0.5):
+    weight_decay=0.0):
         self.env = env
         # print(env)
         self.basis = basis
@@ -45,7 +45,7 @@ class Config:
         self.T3 = T3
         self.buffer_size = buffer_size
         self.batch_size = batch_size
-        self.weight_decay = weight_decay
+        self.weight_decay = weight_decay #TODO: Check weight decay
 
 
 class Solver:
@@ -208,17 +208,18 @@ class Solver:
                 log.info(f"T1: {t1} | T3: {t3} | Total Reward: {total_r} | Length: {step} | Avg Reward: {total_r / step}")
 
             # Average Results Together
-            c_value /= t3
+            c_value /= self.config.T3
             H_value /= B
             A_value /= B
             B_value /= B
-            # print(c_value, H_value, A_value, B_value)
+
+            H_value += 1e-6
 
             d_reward_func = - c_value * (A_value.squeeze() / H_value.squeeze())
-            d_gamma_func = - c_value * (B_value.squeeze() / H_value.squeeze())
+            # d_gamma_func = - c_value * (B_value.squeeze() / H_value.squeeze())
 
             reward_func.optim.zero_grad()
-            gamma_func.optim.zero_grad()
+            # gamma_func.optim.zero_grad()
 
             # print(reward_func.fc1.weight.shape, d_reward_func.shape)
             # TODO: Make sure right shape

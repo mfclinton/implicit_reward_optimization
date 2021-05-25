@@ -26,7 +26,7 @@ class Config:
     method="file",
     buffer_size=10000,
     batch_size=10,
-    weight_decay=0.5):
+    weight_decay=0.0):
         self.env = env
         # print(env)
         self.basis = basis
