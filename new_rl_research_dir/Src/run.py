@@ -29,7 +29,7 @@ class Config:
     restore=False,
     method="file",
     buffer_size=10000,
-    batch_size=10,
+    batch_size=10, #Not Used Parameter
     weight_decay=0.0):
         self.env = env
         # print(env)
@@ -112,7 +112,8 @@ class Solver:
             total_r += reward
 
             step += 1
-        
+            # env.render()
+
         return total_r, step
     
     def train(self, data_mngr):
@@ -127,7 +128,7 @@ class Solver:
         # assert self.config.offpolicy or self.config.batch_size <= self.config.T2
 
         for t1 in range(self.config.T1):
-            
+            # agent.init(self.config)
             if not self.config.offpolicy:
                 self.memory.reset()
 
@@ -144,7 +145,7 @@ class Solver:
 
                 # Optimize Agent
                 # batch_size = self.memory.size if self.memory.size < self.config.batch_size else self.config.batch_size
-                _, s, a, _, r, _ = sample
+                ids, s, a, _, r, mask = sample
                 B, H, D = s.shape
                 _, _, A = a.shape
 
@@ -153,13 +154,12 @@ class Solver:
                 agent.optimize(s_features, a, in_r, in_g) # TODO: Add back r
 
                 total_r = r.sum()
-                total_in_r = in_r.sum()
-                log.info(f"T2: {t1} | T2: {t2} | Total Reward: {total_r} | Length: {step} | Avg Reward: {total_r / step}")
-                log.info(f"T2: {t1} | T2: {t2} | Total Internal Reward: {total_in_r} | Length: {step} | Avg Internal Reward: {total_in_r / step}")
+                total_in_r = in_r.sum().detach()
+                # log.info(f"T1: {t1} | T2: {t2} | Total Reward: {total_r} | Length: {step} | Avg Reward: {total_r / step}")
+                # log.info(f"T1: {t1} | T2: {t2} | Total Internal Reward: {total_in_r} | Length: {step} | Avg Internal Reward: {total_in_r / step}")
                 data_mngr.update_internal_rewards(total_in_r)
 
             # TODO: Make different batch sizes
-            # print(self.config.batch_size)
             sample = self.memory.sample(self.config.batch_size, replace=False)
             _, s, a, _, r, mask = sample
             
@@ -176,7 +176,6 @@ class Solver:
                 disc_in_r = Get_Discounted_Returns(in_r[b], cumu_in_g, normalize=False).detach()
 
                 # TODO: CHECK GRADIENTS
-                # print(s_features[:5,:])
                 phi = calc_grads(agent.policy, log_pi[b], True).detach()
                 d_in_r = calc_grads(reward_func, in_r[b], True).detach()
                 d_in_g = calc_grads(gamma_func, in_g[b], True).detach()
@@ -185,7 +184,6 @@ class Solver:
                 B_value += Calculate_B(phi, d_in_g, in_r[b])
                 A_value += Approximate_A(phi, cumu_in_g, d_in_r)
 
-            # print(H_value.shape, B_value.shape, A_value.shape)
             env.heatmap = np.zeros((env.width, env.width)) # TODO REMOVE THIS
             c_value = 0
             for t3 in range(self.config.T3):
@@ -199,13 +197,12 @@ class Solver:
                 s_features, log_pi, in_r, in_g = Process_Sample(sample, basis, agent, reward_func, gamma_func)
 
                 log_pi = log_pi.squeeze()
-                in_r = in_r.squeeze()
-                in_g = in_g.squeeze()
+                in_r = in_r.squeeze() #Not Used
+                in_g = in_g.squeeze() #Not Used
                 mask = mask.squeeze()
 
                 gamma = torch.full((H,), self.config.gamma)
                 gamma *= mask
-                
                 cumu_gamma = Get_Cumulative_Gamma(gamma).detach() * mask
 
                 phi = calc_grads(agent.policy, log_pi, True).detach()
@@ -215,16 +212,16 @@ class Solver:
 
                 data_mngr.update_rewards(total_r)
                 
+                total_in_r = in_r.sum().detach()
                 log.info(f"T1: {t1} | T3: {t3} | Total Reward: {total_r} | Length: {step} | Avg Reward: {total_r / step}")
-                log.info(f"T1: {t1} | T3: {t3} | Total Internal Reward: {in_r.sum()} | Length: {step} | Avg Internal Reward: {in_r.sum() / step}")
+                log.info(f"T1: {t1} | T3: {t3} | Total Internal Reward: {total_in_r} | Length: {step} | Avg Internal Reward: {total_in_r / step}")
 
             # Average Results Together
             c_value /= self.config.T3
             H_value /= B
             A_value /= B
             B_value /= B
-
-            H_value += 1e-6
+            H_value -= 1e-6
 
             d_reward_func = - c_value * (A_value.squeeze() / H_value.squeeze())
             # d_gamma_func = - c_value * (B_value.squeeze() / H_value.squeeze())
@@ -232,12 +229,11 @@ class Solver:
             reward_func.optim.zero_grad()
             # gamma_func.optim.zero_grad()
 
-            # print(reward_func.fc1.weight.shape, d_reward_func.shape)
             # TODO: Make sure right shape
             reward_func.fc1.weight.grad = d_reward_func.view(reward_func.fc1.weight.shape).detach()
             # gamma_func.fc1.weight.grad = d_gamma_func.view(gamma_func.fc1.weight.shape).detach()
 
-            reward_func.step()
+            reward_func.step(normalize_grad=True)
             # gamma_func.step()
 
             # TODO: REMOVE
@@ -245,7 +241,7 @@ class Solver:
 
             if t1 == self.config.T1 - 1:
                 data_mngr.update_returns()
-                data_mngr.update_internal_returns(total_in_r)
+                data_mngr.update_internal_returns()
 
             
 log = logging.getLogger(__name__)

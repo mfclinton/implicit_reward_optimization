@@ -166,7 +166,7 @@ class Gridworld_687(object):
 
         term = self.is_terminal()
         if term:
-            print("---------------", self.curr_pos)
+            # print("---------------", self.curr_pos)
             return self.curr_state, self.timeout_reward, self.valid_actions, term, {'No INFO implemented yet'}
 
         reward += self.step_reward

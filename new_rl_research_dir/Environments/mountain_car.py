@@ -68,8 +68,8 @@ class MountainCarEnv(gym.Env):
         self.n_actions = 3
 
         # self.force = 0.001
-        # self.force = 0.002
-        self.force = 0.0001
+        self.force = 0.0025
+        # self.force = 0.0001
         self.gravity = 0.0025
 
         self.low = np.array(

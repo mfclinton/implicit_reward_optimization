@@ -21,11 +21,11 @@ config:
   offpolicy: True
   T1: 10
   T2: 100
-  T3: 20
+  T3: 10
   buffer_size: 10000
   batch_size: 100
   weight_decay: 0.0
 seed: 0
-num_runs: 10
+num_runs: 3
   
   
