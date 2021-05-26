@@ -8,10 +8,11 @@ class Policy(Algorithm):
     def __init__(self):
         super(Policy, self).__init__()
 
-    def init(self, config, action_dim=None):
+    def init(self, config, amsgrad=True):
         self.config = config
         self.state_dim = config.basis.feature_dim
         self.action_dim = config.env.action_space.n
+        self.amsgrad=amsgrad
 
 class Categorical(Policy):
     def __init__(self, optim=torch.optim.Adam, lr=.01):

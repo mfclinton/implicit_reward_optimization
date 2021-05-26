@@ -11,6 +11,8 @@ from Src.Algorithms.Alg_Utils import *
 import sys
 import random
 import logging
+import concurrent
+from concurrent.futures import ThreadPoolExecutor
 
 class Config:
     def __init__(self,
@@ -226,14 +228,14 @@ class Solver:
             H_value[nonzero_idx] += 1
 
             d_reward_func = - c_value * (A_value.squeeze() / H_value.squeeze())
-            # d_gamma_func = - c_value * (B_value.squeeze() / H_value.squeeze())
+            d_gamma_func = - c_value * (B_value.squeeze() / H_value.squeeze())
 
             reward_func.optim.zero_grad()
-            # gamma_func.optim.zero_grad()
+            gamma_func.optim.zero_grad()
 
             # TODO: Make sure right shape
             reward_func.fc1.weight.grad = d_reward_func.view(reward_func.fc1.weight.shape).detach()
-            # gamma_func.fc1.weight.grad = d_gamma_func.view(gamma_func.fc1.weight.shape).detach()
+            gamma_func.fc1.weight.grad = d_gamma_func.view(gamma_func.fc1.weight.shape).detach()
 
             reward_func.step(normalize_grad=True)
             # gamma_func.step()
@@ -246,6 +248,23 @@ class Solver:
                 data_mngr.update_internal_returns()
 
             
+def run_thread(nonloaded_config, seed):
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    
+    t = time()
+    data_mngr = DataManager()
+    solver = Solver(nonloaded_config.config)
+    solver.train(data_mngr)
+    data_mngr.save()
+
+    with open("config_params", "w") as f:
+        f.write(str(nonloaded_config))
+
+    log.info("Total time taken: {}".format(time()-t))
+
+
 log = logging.getLogger(__name__)
     
 @hydra.main(config_path=".", config_name="config")
@@ -253,28 +272,9 @@ log = logging.getLogger(__name__)
 def main(nonloaded_config : DictConfig) -> None:
 
     # Set Seed
-    # TODO: Propagate seeding in init functions, so can seed in config
     seed = nonloaded_config.seed
-    torch.manual_seed(seed)
-    np.random.seed(seed)
-    random.seed(seed)
-
-
-    t = time()
-    data_mngr = DataManager()
-
-    # TODO: Abhishek - Remove this
-    threads = []
-
-    for i in range(nonloaded_config.num_runs):
-        log.info(f"======= RUN {i} =======")
-        solver = Solver(nonloaded_config.config)
-        solver.train(data_mngr)
-
-    data_mngr.save()
-    with open("config_params", "w") as f:
-        f.write(str(nonloaded_config))
-    log.info("Total time taken: {}".format(time()-t))
+    run_thread(nonloaded_config, seed) #TODO: use number of runs param
+    
 
 
 if __name__ == "__main__":

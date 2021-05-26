@@ -6,7 +6,10 @@ class Algorithm(nn.Module):
         super(Algorithm, self).__init__()
 
     def init_optimizer(self):
-        self.optim = self.optim_func(self.parameters(), lr=self.lr, weight_decay=self.config.weight_decay)
+        if hasattr(self, "amsgrad"):
+            self.optim = self.optim_func(self.parameters(), lr=self.lr, weight_decay=self.config.weight_decay, amsgrad = self.amsgrad)
+        else:
+            self.optim = self.optim_func(self.parameters(), lr=self.lr, weight_decay=self.config.weight_decay)
 
     def step(self, loss = None, normalize_grad = False):
 
