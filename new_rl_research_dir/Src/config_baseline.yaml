@@ -1,5 +1,5 @@
 config:
-  _target_: Src.run.Config
+  _target_: Src.run_baseline.Config
   env:
     _target_: Environments.mountain_car.MountainCarEnv
   basis:
@@ -7,9 +7,12 @@ config:
       fourier_order: 3
       fourier_coupled: True
   agent:
-    _target_: Src.Algorithms.Agent.Reinforce.Reinforce
+    _target_: Src.Algorithms.Agent.Reinforce_w_Baseline.Reinforce
     policy:
       _target_: Src.Utils.Policy.Categorical
+      lr: .01
+    baseline:
+      _target_: Src.Algorithms.Reward.Baseline.Baseline
       lr: .01
   reward_func:
     _target_: Src.Algorithms.Reward.RewardFunc.RewardFunc
@@ -17,10 +20,13 @@ config:
   gamma_func:
     _target_: Src.Algorithms.Gamma.GammaFunc.GammaFunc
   name: "my_experiment"
-  offpolicy: True
-  max_episodes: 500
+  offpolicy: False
+  max_episodes: 1000
   buffer_size: 10000
-  batch_size: 10
+  batch_size: 5
 seed: 0
-num_runs: 5
-  
+num_runs: 10
+hydra:
+  run:
+    # Output directory for normal runs
+    dir: ./outputs/${config.env._target_}/${config._target_}/${config.offpolicy}/${now:%Y-%m-%d_%H-%M-%S}

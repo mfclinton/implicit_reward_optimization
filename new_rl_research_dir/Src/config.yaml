@@ -27,5 +27,8 @@ config:
   weight_decay: 0.0
 seed: 0
 num_runs: 3
-  
+hydra:
+  run:
+    # Output directory for normal runs
+    dir: ./outputs/${config.env._target_}/${config._target_}/${config.offpolicy}/${now:%Y-%m-%d_%H-%M-%S}
   

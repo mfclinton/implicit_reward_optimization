@@ -184,7 +184,7 @@ class Solver:
                 B_value += Calculate_B(phi, d_in_g, in_r[b])
                 A_value += Approximate_A(phi, cumu_in_g, d_in_r)
 
-            env.heatmap = np.zeros((env.width, env.width)) # TODO REMOVE THIS
+            # env.heatmap = np.zeros((env.width, env.width)) # TODO REMOVE THIS
             c_value = 0
             for t3 in range(self.config.T3):
                 total_r, step = self.generate_episode()
@@ -239,7 +239,7 @@ class Solver:
             # gamma_func.step()
 
             # TODO: REMOVE
-            env.debug_rewards(reward_func, basis, print_r_map=True)
+            # env.debug_rewards(reward_func, basis, print_r_map=True)
 
             if t1 == self.config.T1 - 1:
                 data_mngr.update_returns()
@@ -262,6 +262,9 @@ def main(nonloaded_config : DictConfig) -> None:
 
     t = time()
     data_mngr = DataManager()
+
+    # TODO: Abhishek - Remove this
+    threads = []
 
     for i in range(nonloaded_config.num_runs):
         log.info(f"======= RUN {i} =======")

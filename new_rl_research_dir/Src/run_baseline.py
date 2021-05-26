@@ -25,7 +25,7 @@ class Config:
     restore=False,
     method="file",
     buffer_size=10000,
-    batch_size=10,
+    batch_size=1,
     weight_decay=0.0):
         self.env = env
         # print(env)
