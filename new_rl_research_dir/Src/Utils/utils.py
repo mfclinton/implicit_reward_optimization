@@ -52,6 +52,9 @@ class TrajectoryBuffer:
         self.timestep_ctr = 0
         self.ids[self.buffer_pos] = self.episode_ctr
 
+        self.s[self.buffer_pos].fill_(0)
+        self.a[self.buffer_pos].fill_(0)
+        self.p[self.buffer_pos].fill_(0)
         self.r[self.buffer_pos].fill_(0)
         self.mask[self.buffer_pos].fill_(0)
 
@@ -118,6 +121,7 @@ class DataManager:
 
     def update_internal_returns(self):
         self.internal_returns.append(self.internal_rewards)
+        self.internal_rewards = []
 
     def process_returns(self, returns):
         np_returns = np.array(returns)
@@ -143,12 +147,16 @@ class DataManager:
         df.to_csv(f"{self.result_path}/{name}_data.csv", index=False)
 
     def save_plot(self, m, se, name=""):
+        fig = plt.figure()
         x = np.arange(m.shape[0])
         plt.errorbar(x, m, se, linestyle='None', marker='^')
         plt.ylabel("Total Reward")
         plt.savefig(f"{self.result_path}/{name}_graph.png")
+        # plt.close(fig)
+
 
     def save_rolling_plot(self, m, se, name=""):
+        fig = plt.figure()
         x = np.arange(m.shape[0])
         m = pd.DataFrame(data=m)
         se = pd.DataFrame(data=se)
@@ -159,6 +167,7 @@ class DataManager:
         plt.ylabel("Total Reward")
         print(self.result_path)
         plt.savefig(f"{self.result_path}/{name}_rolling_graph.png")
+        # plt.close(fig)
 
 
     def save_3d_reward_plot(self, m):
