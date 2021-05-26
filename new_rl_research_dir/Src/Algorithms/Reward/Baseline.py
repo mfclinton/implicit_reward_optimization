@@ -3,15 +3,18 @@ from torch import nn
 from Src.Algorithms.Algorithm import Algorithm
 
 class Baseline(Algorithm):
-    def __init__(self, state_dim, optim=torch.optim.Adam, inner_dim=32, lr=.01):
+    def __init__(self, optim=torch.optim.Adam, lr=.01):
         super(Baseline, self).__init__()
-        self.state_dim = state_dim
+        self.optim_func = optim
+        self.lr = lr
+
+    def init(self, config):
+        self.config = config
+        self.state_dim = config.basis.feature_dim
         self.value_fc1 = torch.nn.Linear(self.state_dim, 1)
-        self.init_optimizer(optim, lr)
+        self.init_optimizer()
 
         # self.value_fc2 = torch.nn.Linear(inner_dim, 1)
-
-        # self.optim = torch.optim.Adam(self.parameters(), lr=lr)
 
     
     def forward(self, states):

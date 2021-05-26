@@ -6,7 +6,7 @@ class Algorithm(nn.Module):
         super(Algorithm, self).__init__()
 
     def init_optimizer(self):
-        self.optim = self.optim(self.parameters(), lr=self.lr, weight_decay=self.config.weight_decay)
+        self.optim = self.optim_func(self.parameters(), lr=self.lr, weight_decay=self.config.weight_decay)
 
     def step(self, loss = None, normalize_grad = False):
 
@@ -15,7 +15,7 @@ class Algorithm(nn.Module):
             loss.backward()
 
         if normalize_grad:
-            torch.nn.utils.clip_grad_norm_(self.parameters(), 1)
+            torch.nn.utils.clip_grad_norm_(self.parameters(), 30)
         self.optim.step()
 
     

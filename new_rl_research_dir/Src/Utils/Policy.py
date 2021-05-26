@@ -16,7 +16,7 @@ class Policy(Algorithm):
 class Categorical(Policy):
     def __init__(self, optim=torch.optim.Adam, lr=.01):
         super(Categorical, self).__init__()
-        self.optim = optim
+        self.optim_func = optim
         self.lr = lr
 
     def init(self, config, action_dim=None):

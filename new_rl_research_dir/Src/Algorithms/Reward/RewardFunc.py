@@ -7,7 +7,7 @@ import torch.nn as nn
 class RewardFunc(Algorithm):
     def __init__(self, optim=torch.optim.Adam, lr=.01):
         super(RewardFunc, self).__init__()
-        self.optim = optim
+        self.optim_func = optim
         self.lr = lr
 
     def init(self, config):
