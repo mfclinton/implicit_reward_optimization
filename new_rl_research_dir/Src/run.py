@@ -221,7 +221,9 @@ class Solver:
             H_value /= B
             A_value /= B
             B_value /= B
-            H_value -= 1e-6
+
+            nonzero_idx = (H_value == 0).nonzero()
+            H_value[nonzero_idx] += 1
 
             d_reward_func = - c_value * (A_value.squeeze() / H_value.squeeze())
             # d_gamma_func = - c_value * (B_value.squeeze() / H_value.squeeze())

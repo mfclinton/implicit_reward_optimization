@@ -5,28 +5,26 @@ config:
   basis:
       _target_: Src.Utils.Basis.OneHot_Basis
   agent:
-    _target_: Src.Algorithms.Agent.Reinforce_w_Baseline.Reinforce
+    _target_: Src.Algorithms.Agent.Reinforce.Reinforce
     policy:
       _target_: Src.Utils.Policy.Categorical
-      lr: 0.1
-    baseline:
-      _target_: Src.Algorithms.Reward.Baseline.Baseline
+      lr: 0.01
   reward_func:
     _target_: Src.Algorithms.Reward.RewardFunc.RewardFunc
-    lr: 0.1
+    lr: 1.
   gamma_func:
     _target_: Src.Algorithms.Gamma.GammaFunc.GammaFunc
     lr: 0.1
   gamma: 0.99
   name: "my_experiment"
-  offpolicy: False
+  offpolicy: True
   T1: 10
   T2: 100
-  T3: 10
+  T3: 50
   buffer_size: 10000
   batch_size: 100
   weight_decay: 0.
 seed: 0
-num_runs: 3
+num_runs: 2
 
   
