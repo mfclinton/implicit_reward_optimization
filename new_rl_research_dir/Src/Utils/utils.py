@@ -94,13 +94,10 @@ class TrajectoryBuffer:
         return self._get(np.random.choice(self.valid_len, count, replace=replace))
 
 class DataManager:
-    def __init__(self):
+    def __init__(self, save_just_data = False):
         self.result_path = os.getcwd()
-        # print(self.result_path)
-        # if not os.path.exists(self.result_path):
-        #     print(f"Creating Results Path at {self.result_path}")
-        #     os.makedirs(self.result_path)
-
+        self.save_idx = -1
+        self.save_just_data = save_just_data
         self.reset()
 
     def reset(self):
@@ -112,16 +109,21 @@ class DataManager:
     def update_rewards(self, reward):
         self.rewards.append(reward)
 
-    def update_internal_rewards(self, internal_reward):
-        self.internal_rewards.append(internal_reward)
+    # def update_internal_rewards(self, internal_reward):
+    #     self.internal_rewards.append(internal_reward)
 
     def update_returns(self):
         self.returns.append(self.rewards)
+        if self.save_just_data:
+            self.save()
+            self.returns = []
+
         self.rewards = []
 
-    def update_internal_returns(self):
-        self.internal_returns.append(self.internal_rewards)
-        self.internal_rewards = []
+# TODO: Internal Rewards has been deprecated?
+    # def update_internal_returns(self):
+    #     self.internal_returns.append(self.internal_rewards)
+    #     self.internal_rewards = []
 
     def process_returns(self, returns):
         np_returns = np.array(returns)
@@ -132,27 +134,33 @@ class DataManager:
         return m, se
 
     def save(self):
-        m, se = self.process_returns(self.returns)
-        self.save_csv(m, se, "r")
-        self.save_plot(m, se, "r")
-        self.save_rolling_plot(m, se, "r")
+        self.save_idx += 1
 
-        if len(self.internal_returns) != 0:
-            i_m, i_se = self.process_returns(self.internal_returns)
-            self.save_csv(i_m, i_se, "in_r")
-            self.save_plot(i_m, i_se, "in_r")
-            self.save_rolling_plot(i_m, i_se, "in_r")
+        if len(self.returns) != 0:
+            m, se = self.process_returns(self.returns)
+            if len(self.returns) == 1:
+                self.save_csv(m, np.zeros_like(se), "r")
+            elif len(self.returns) > 1:
+                self.save_csv(m, se, "r")
+                self.save_plot(m, se, "r")
+                self.save_rolling_plot(m, se, "r")
+
+        # if len(self.internal_returns) != 0:
+        #     i_m, i_se = self.process_returns(self.internal_returns)
+        #     self.save_csv(i_m, i_se, "in_r")
+        #     self.save_plot(i_m, i_se, "in_r")
+        #     self.save_rolling_plot(i_m, i_se, "in_r")
 
     def save_csv(self, m, se, name=""):
         df = pd.DataFrame(np.stack((m, se), axis=1), columns=["Mean", "Standard Error"])
-        df.to_csv(f"{self.result_path}/{name}_data.csv", index=False)
+        df.to_csv(f"{self.result_path}/{name}_{self.save_idx}_data.csv", index=False)
 
     def save_plot(self, m, se, name=""):
         fig = plt.figure()
         x = np.arange(m.shape[0])
         plt.errorbar(x, m, se, linestyle='None', marker='^')
         plt.ylabel("Total Reward")
-        plt.savefig(f"{self.result_path}/{name}_graph.png")
+        plt.savefig(f"{self.result_path}/{name}_{self.save_idx}_graph.png")
         # plt.close(fig)
 
 
@@ -167,7 +175,7 @@ class DataManager:
         plt.errorbar(x, rolling_m, rolling_se, linestyle='None', marker='^')
         plt.ylabel("Total Reward")
         print(self.result_path)
-        plt.savefig(f"{self.result_path}/{name}_rolling_graph.png")
+        plt.savefig(f"{self.result_path}/{name}_{self.save_idx}_rolling_graph.png")
         # plt.close(fig)
 
     def save_model(self, model, name):
@@ -177,7 +185,7 @@ class DataManager:
         self.save_model(r_func, f"r_func_{t1}")
         self.save_model(g_func, f"g_func_{t1}")
 
-    def save_3d_reward_plot(self, m):
+    def save_3d_reward_plot(self):
         pass
 
 

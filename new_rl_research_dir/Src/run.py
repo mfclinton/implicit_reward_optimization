@@ -135,8 +135,8 @@ class Solver:
 
             # Checkpoints model
             save_interval = (self.config.T1 - 1) // 3
-            if save_interval == 0 or t1 % save_interval == 0:
-                data_mngr.save_reward_and_gamma_func(reward_func, gamma_func, t1)
+            # if save_interval == 0 or t1 % save_interval == 0:
+                # data_mngr.save_reward_and_gamma_func(reward_func, gamma_func, t1)
 
             # agent.init(self.config)
             if not self.config.offpolicy:
@@ -149,7 +149,7 @@ class Solver:
                 if not self.config.offpolicy or self.memory.episode_ctr < self.config.T3:
                     total_r, step = self.generate_episode()
                     sample = self.memory._get([self.memory.buffer_pos])
-                    data_mngr.update_rewards(total_r)
+                    # data_mngr.update_rewards(total_r)
                 else:
                     sample = self.memory.sample(1) 
 
@@ -167,7 +167,7 @@ class Solver:
                 total_in_r = in_r.sum().detach()
                 # log.info(f"T1: {t1} | T2: {t2} | Total Reward: {total_r} | Length: {step} | Avg Reward: {total_r / step}")
                 # log.info(f"T1: {t1} | T2: {t2} | Total Internal Reward: {total_in_r} | Length: {step} | Avg Internal Reward: {total_in_r / step}")
-                data_mngr.update_internal_rewards(total_in_r)
+                # data_mngr.update_internal_rewards(total_in_r)
 
             # TODO: Make different batch sizes
             sample = self.memory.sample(self.config.batch_size, replace=False)
@@ -253,7 +253,7 @@ class Solver:
 
             if t1 == self.config.T1 - 1:
                 data_mngr.update_returns()
-                data_mngr.update_internal_returns()
+                # data_mngr.update_internal_returns()
 
             
 def run_thread(nonloaded_config, seed):
@@ -264,10 +264,10 @@ def run_thread(nonloaded_config, seed):
     random.seed(seed)
     
     t = time()
-    data_mngr = DataManager()
+    data_mngr = DataManager(save_just_data = True)
     solver = Solver(nonloaded_config.config)
     solver.train(data_mngr, log)
-    data_mngr.save()
+    # data_mngr.save()
 
     with open("config_params", "w") as f:
         f.write(str(nonloaded_config))
