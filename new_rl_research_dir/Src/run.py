@@ -273,6 +273,7 @@ def run_thread(nonloaded_config, seed):
         f.write(str(nonloaded_config))
 
     log.info("Total time taken: {}".format(time()-t))
+    return data_mngr.total_avg_r
 
 @hydra.main(config_path=".", config_name="config")
 # @hydra.main(config_path=".", config_name="config_GW")
@@ -280,8 +281,10 @@ def main(nonloaded_config : DictConfig) -> None:
 
     # Set Seed
     seed = nonloaded_config.seed
+    total_score = 0
     for i in range(nonloaded_config.num_runs):
-        run_thread(nonloaded_config, seed + 10000 * i) #TODO: use number of runs param
+        total_score += run_thread(nonloaded_config, seed + 10000 * i) #TODO: use number of runs param
+    return total_score
 
 if __name__ == "__main__":
     main()
