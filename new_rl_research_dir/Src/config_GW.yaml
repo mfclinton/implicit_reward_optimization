@@ -20,10 +20,10 @@ config:
   gamma: 0.99
   name: "my_experiment"
   offpolicy: True
-  T1: 10
-  T2: 100
-  T3: 20
-  buffer_size: 100000
+  T1: 1
+  T2: 1
+  T3: 1
+  buffer_size: 10000
   batch_size: 250
   weight_decay: 0.0
   dropped_gamma: False
@@ -32,4 +32,4 @@ num_runs: 30 #Does nothing rn
 hydra:
   run:
     # Output directory for normal runs
-    dir: ./outputs/${config.env._target_}/${config.env.aux_r_id}/${config._target_}/${config.name}/${config.offpolicy}/${num_runs}/${now:%Y-%m-%d_%H-%M-%S}
+    dir: ./outputs/${config.env._target_}/${config.env.aux_r_id}/${config._target_}/${config.name}/${config.offpolicy}/${num_runs}/${now:%Y-%m-%d_%H-%M-%S}/${config.seed}
