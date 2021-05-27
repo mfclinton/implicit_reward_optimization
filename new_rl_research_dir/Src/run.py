@@ -11,8 +11,8 @@ from Src.Algorithms.Alg_Utils import *
 import sys
 import random
 import logging
-import concurrent
-from concurrent.futures import ThreadPoolExecutor
+from hydra.experimental import compose, initialize
+# from multiprocessing import Pool as ThreadPool
 
 class Config:
     def __init__(self,
@@ -118,7 +118,7 @@ class Solver:
 
         return total_r, step
     
-    def train(self, data_mngr):
+    def train(self, data_mngr, log):
         env = self.config.env
         basis = self.config.basis
 
@@ -249,6 +249,8 @@ class Solver:
 
             
 def run_thread(nonloaded_config, seed):
+    log = logging.getLogger(__name__)
+
     torch.manual_seed(seed)
     np.random.seed(seed)
     random.seed(seed)
@@ -256,7 +258,7 @@ def run_thread(nonloaded_config, seed):
     t = time()
     data_mngr = DataManager()
     solver = Solver(nonloaded_config.config)
-    solver.train(data_mngr)
+    solver.train(data_mngr, log)
     data_mngr.save()
 
     with open("config_params", "w") as f:
@@ -264,9 +266,6 @@ def run_thread(nonloaded_config, seed):
 
     log.info("Total time taken: {}".format(time()-t))
 
-
-log = logging.getLogger(__name__)
-    
 @hydra.main(config_path=".", config_name="config")
 # @hydra.main(config_path=".", config_name="config_GW")
 def main(nonloaded_config : DictConfig) -> None:
@@ -274,8 +273,6 @@ def main(nonloaded_config : DictConfig) -> None:
     # Set Seed
     seed = nonloaded_config.seed
     run_thread(nonloaded_config, seed) #TODO: use number of runs param
-    
-
 
 if __name__ == "__main__":
     main()

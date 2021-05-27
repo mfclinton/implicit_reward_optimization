@@ -19,9 +19,9 @@ config:
     lr: .01
   name: "my_experiment"
   offpolicy: True
-  T1: 10
-  T2: 100
-  T3: 10
+  T1: 1
+  T2: 1
+  T3: 1
   buffer_size: 10000
   batch_size: 100
   weight_decay: 0.0
@@ -30,5 +30,4 @@ num_runs: 3
 hydra:
   run:
     # Output directory for normal runs
-    dir: ./outputs/${config.env._target_}/${config._target_}/${config.offpolicy}/${now:%Y-%m-%d_%H-%M-%S}
-  
+    dir: ./outputs/${config.env._target_}/${config._target_}/${config.name}/${config.offpolicy}/${now:%Y-%m-%d_%H-%M-%S}  
