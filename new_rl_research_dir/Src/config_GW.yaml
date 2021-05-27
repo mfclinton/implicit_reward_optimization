@@ -32,4 +32,4 @@ num_runs: 30 #Does nothing rn
 hydra:
   run:
     # Output directory for normal runs
-    dir: ./outputs/${config.env._target_}/${config.env.aux_r_id}/${config._target_}/${config.name}/${config.offpolicy}/${num_runs}/${now:%Y-%m-%d_%H-%M-%S}/${seed}
+    dir: ./outputs/${config.env._target_}/${config.env.aux_r_id}/${config._target_}/${config.name}/${config.offpolicy}/${num_runs}/${seed}
