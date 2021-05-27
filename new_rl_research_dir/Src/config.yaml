@@ -25,7 +25,7 @@ config:
   buffer_size: 100000
   batch_size: 100
   weight_decay: 0.0
-  dropped_gamma: False
+  dropped_gamma: False #This does nothing rn
 seed: 0
 num_runs: 3
 hydra:

@@ -15,10 +15,11 @@ class Policy(Algorithm):
         self.amsgrad=amsgrad
 
 class Categorical(Policy):
-    def __init__(self, optim=torch.optim.Adam, lr=.01):
+    def __init__(self, optim=torch.optim.Adam, lr=.01, weight_decay = 0):
         super(Categorical, self).__init__()
         self.optim_func = optim
         self.lr = lr
+        self.weight_decay = weight_decay
 
     def init(self, config, action_dim=None):
         super(Categorical, self).init(config)

@@ -137,10 +137,11 @@ class DataManager:
         self.save_plot(m, se, "r")
         self.save_rolling_plot(m, se, "r")
 
-        i_m, i_se = self.process_returns(self.internal_returns)
-        self.save_csv(i_m, i_se, "in_r")
-        self.save_plot(i_m, i_se, "in_r")
-        self.save_rolling_plot(i_m, i_se, "in_r")
+        if len(self.internal_returns) != 0:
+            i_m, i_se = self.process_returns(self.internal_returns)
+            self.save_csv(i_m, i_se, "in_r")
+            self.save_plot(i_m, i_se, "in_r")
+            self.save_rolling_plot(i_m, i_se, "in_r")
 
     def save_csv(self, m, se, name=""):
         df = pd.DataFrame(np.stack((m, se), axis=1), columns=["Mean", "Standard Error"])

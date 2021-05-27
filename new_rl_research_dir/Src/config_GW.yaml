@@ -2,7 +2,7 @@ config:
   _target_: Src.run.Config
   env:
     _target_: Environments.Gridworld_687.Gridworld_687
-    aux_r_id: 1
+    aux_r_id: -1
   basis:
       _target_: Src.Utils.Basis.OneHot_Basis
   agent:
@@ -10,6 +10,7 @@ config:
     policy:
       _target_: Src.Utils.Policy.Categorical
       lr: 0.01
+      weight_decay: 0.0
   reward_func:
     _target_: Src.Algorithms.Reward.RewardFunc.RewardFunc
     lr: 1.
@@ -21,14 +22,14 @@ config:
   offpolicy: True
   T1: 10
   T2: 100
-  T3: 50
-  buffer_size: 10000
-  batch_size: 100
-  weight_decay: 0.
+  T3: 20
+  buffer_size: 100000
+  batch_size: 250
+  weight_decay: 0.0
   dropped_gamma: False
 seed: 0
-num_runs: 2
+num_runs: 30
 hydra:
   run:
     # Output directory for normal runs
-    dir: ./outputs/${config.env._target_}/${config._target_}/${config.name}/${config.offpolicy}/${now:%Y-%m-%d_%H-%M-%S}
+    dir: ./outputs/${config.env._target_}/${config.env.aux_r_id}/${config._target_}/${config.name}/${config.offpolicy}/${num_runs}/${now:%Y-%m-%d_%H-%M-%S}

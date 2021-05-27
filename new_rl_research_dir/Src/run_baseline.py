@@ -26,7 +26,8 @@ class Config:
     method="file",
     buffer_size=10000,
     batch_size=1,
-    weight_decay=0.0):
+    weight_decay=0.0,
+    dropped_gamma=False):
         self.env = env
         # print(env)
         self.basis = basis
@@ -39,6 +40,7 @@ class Config:
         self.buffer_size = buffer_size
         self.batch_size = batch_size
         self.weight_decay = weight_decay
+        self.dropped_gamma = dropped_gamma
 
 
 class Solver:
@@ -123,6 +125,13 @@ class Solver:
                 # print(s.size())
                 B, H, D = s.shape
                 _, _, A = a.shape
+
+                # TODO: make more modular
+                if hasattr(self.config.env, "aux_reward"):
+                    aux_rewards = self.config.env.Get_Aux_Reward(s.view(B * H, D).long())
+                    action_indexes = torch.nonzero(a.view(B * H, A))
+                    aux_r = aux_rewards[action_indexes[:,0], action_indexes[:,1]]
+                    r.view(B*H)[action_indexes[:,0]] += aux_r
 
                 s_features = basis.forward(s.view(B * H, D))
                 # print(s_features.size(), mask.size())

@@ -2,6 +2,7 @@ config:
   _target_: Src.run_baseline.Config
   env:
     _target_: Environments.Gridworld_687.Gridworld_687
+    aux_r_id: -1
   basis:
       _target_: Src.Utils.Basis.OneHot_Basis
   agent:
@@ -17,11 +18,11 @@ config:
   name: "my_experiment"
   offpolicy: False
   max_episodes: 1000
-  buffer_size: 10000
-  batch_size: 5
+  buffer_size: 100000
+  batch_size: 1
 seed: 0
-num_runs: 10
+num_runs: 30
 hydra:
   run:
     # Output directory for normal runs
-    dir: ./outputs/${config.env._target_}/${config._target_}/${config.name}/${config.offpolicy}/${now:%Y-%m-%d_%H-%M-%S}
+    dir: ./outputs/${config.env._target_}/${config.env.aux_r_id}/${config._target_}/${config.name}/${config.offpolicy}/${num_runs}/${now:%Y-%m-%d_%H-%M-%S}
