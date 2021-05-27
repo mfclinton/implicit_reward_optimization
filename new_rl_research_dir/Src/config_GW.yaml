@@ -38,8 +38,8 @@ hydra:
   sweeper:
     optim:
       optimizer: OnePlusOne
-      budget: 1
-      num_workers: 10
+      budget: 1000
+      num_workers: 1000
       maximize: true
     parametrization:
       config.agent.policy.lr:
