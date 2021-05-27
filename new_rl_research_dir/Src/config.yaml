@@ -4,7 +4,7 @@ config:
     _target_: Environments.mountain_car.MountainCarEnv
   basis:
       _target_: Src.Utils.Basis.Fourier_Basis
-      fourier_order: 3
+      fourier_order: 4
       fourier_coupled: True
   agent:
     _target_: Src.Algorithms.Agent.Reinforce.Reinforce
@@ -19,10 +19,10 @@ config:
     lr: .01
   name: "my_experiment"
   offpolicy: True
-  T1: 1
-  T2: 1
-  T3: 1
-  buffer_size: 10000
+  T1: 10
+  T2: 100
+  T3: 100
+  buffer_size: 100000
   batch_size: 100
   weight_decay: 0.0
   dropped_gamma: False

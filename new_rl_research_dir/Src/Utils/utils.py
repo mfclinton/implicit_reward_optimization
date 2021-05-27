@@ -169,6 +169,12 @@ class DataManager:
         plt.savefig(f"{self.result_path}/{name}_rolling_graph.png")
         # plt.close(fig)
 
+    def save_model(self, model, name):
+        torch.save(model.state_dict(), name)
+
+    def save_reward_and_gamma_func(self, r_func, g_func, t1):
+        self.save_model(r_func, f"r_func_{t1}")
+        self.save_model(g_func, f"g_func_{t1}")
 
     def save_3d_reward_plot(self, m):
         pass

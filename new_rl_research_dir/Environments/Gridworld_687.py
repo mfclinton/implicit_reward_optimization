@@ -264,8 +264,8 @@ class Gridworld_687(object):
             h = self.width
             w = self.width
             aux_reward = torch.zeros((h, w, self.action_space.n))
-            aux_reward[1,1,:] = 1
-            aux_reward[0,2,:] = 1
+            aux_reward[1,1,:] = 4
+            aux_reward[0,2,:] = 4
 
         # print(aux_reward)
 
