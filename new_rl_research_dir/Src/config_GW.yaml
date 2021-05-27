@@ -28,7 +28,7 @@ config:
   weight_decay: 0.0
   dropped_gamma: False
 seed: 0
-num_runs: 30
+num_runs: 30 #Does nothing rn
 hydra:
   run:
     # Output directory for normal runs

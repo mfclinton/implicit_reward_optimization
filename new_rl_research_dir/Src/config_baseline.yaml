@@ -24,6 +24,7 @@ config:
   max_episodes: 1000
   buffer_size: 10000
   batch_size: 1
+  gamma: 0.99
 seed: 0
 num_runs: 10
 hydra:

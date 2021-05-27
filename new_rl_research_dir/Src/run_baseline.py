@@ -27,7 +27,8 @@ class Config:
     buffer_size=10000,
     batch_size=1,
     weight_decay=0.0,
-    dropped_gamma=False):
+    dropped_gamma=False,
+    gamma=0.99):
         self.env = env
         # print(env)
         self.basis = basis
@@ -40,7 +41,8 @@ class Config:
         self.buffer_size = buffer_size
         self.batch_size = batch_size
         self.weight_decay = weight_decay
-        self.dropped_gamma = dropped_gamma
+        self.dropped_gamma = dropped_gamma #TODO: Does nothing rn
+        self.gamma = gamma
 
 
 class Solver:
@@ -137,7 +139,7 @@ class Solver:
                 # print(s_features.size(), mask.size())
                 s_features *= mask.view(B*H, 1) #TODO: Check this
 
-                agent.optimize(s_features, a, r)
+                agent.optimize(s_features, a, r, self.config.gamma)
 
 
                 if not self.config.offpolicy:
