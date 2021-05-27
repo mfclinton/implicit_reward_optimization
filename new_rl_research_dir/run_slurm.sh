@@ -1,8 +1,8 @@
 #!/bin/bash
 #
 #SBATCH --job-name=sweep
-#SBATCH --output=stdoutput/res_%j.txt  # output file
-#SBATCH -e stdoutput/res_%j.err        # File to which STDERR will be written
+#SBATCH --output=outputs/stdoutput/res_%j.txt  # output file
+#SBATCH -e outputs/stdoutput/res_%j.err        # File to which STDERR will be written
 #SBATCH --partition=defq    # Partition to submit to
 #
 #SBATCH --ntasks=30
