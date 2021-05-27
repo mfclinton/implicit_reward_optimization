@@ -114,7 +114,7 @@ class DataManager:
     #     self.internal_rewards.append(internal_reward)
 
     def update_returns(self):
-        self.total_avg_r += self.rewards.mean()
+        self.total_avg_r += float(np.array(self.rewards).mean())
         self.returns.append(self.rewards)
         if self.save_just_data:
             self.save()

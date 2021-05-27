@@ -20,11 +20,11 @@ config:
   gamma: 0.99
   name: "my_experiment"
   offpolicy: True
-  T1: 40
-  T2: 100
-  T3: 25
+  T1: 15
+  T2: 80
+  T3: 15
   buffer_size: 10000
-  batch_size: 250
+  batch_size: 100
   weight_decay: 0.001
   dropped_gamma: False #nothing rn
 seed: 0
@@ -44,5 +44,28 @@ hydra:
     parametrization:
       config.agent.policy.lr:
         init: 0.02
+        step: 2.0
+        log: true
+      config.agent.policy.weight_decay:
+        init: 0.005
+        step: 2.0
+        log: true
+      config.reward_func.lr:
+        init: 0.02
+        step: 2.0
+        log: true
+      config.gamma_func.lr:
+        init: 0.02
+        step: 2.0
+        log: true
+      config.gamma:
+        lower: 0.0
+        upper: 1.0
+      config.batch_size:
+        lower: 50
+        upper: 1000
+        integer: true
+      config.weight_decay:
+        init: 0.005
         step: 2.0
         log: true
