@@ -50,7 +50,7 @@ def Process_Sample(sample, basis, agent, reward_func, gamma_func):
     log_pi = log_pi.view(B, H) * mask
     # print(log_pi.view(-1).nonzero().size(), log_pi.size(), "loggg Mate")
 
-    in_r = reward_func(s_features, a.view(B*H, A)).view(B,H)
+    in_r = reward_func(s.view(B * H, D), s_features, a.view(B*H, A)).view(B,H)
     in_r *= mask
     # print(in_r.nonzero().size(), in_r.size(), "reward Mate")
     # print(in_r, r)

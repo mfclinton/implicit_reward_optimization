@@ -9,7 +9,7 @@ from gym.spaces import Discrete, Box
 
 
 class Gridworld_687(object):
-    def __init__(self, max_steps=200, action_prob=1.0, randomness = 0.2, debug=False):
+    def __init__(self, max_steps=200, action_prob=1.0, randomness = 0.2, debug=False, aux_r_id = -1):
         self.debug = debug
         self.action_prob = action_prob
         self.randomness = randomness
@@ -21,6 +21,9 @@ class Gridworld_687(object):
         self.action_space = Discrete(self.n_actions)
         self.observation_space = Box(low=np.zeros(2, dtype=np.int32), high=np.full(2, self.width, dtype=np.int32), dtype=np.int32)
         self._n_episodes = 0
+
+        self.aux_r_id = aux_r_id
+        self.Set_Aux_Reward()
 
         self.max_steps = max_steps
         self.step_reward = 0
@@ -103,7 +106,7 @@ class Gridworld_687(object):
                 states.append([x,y])
         
         states = torch.Tensor(states)
-        r = r_func(basis(states))
+        r = r_func(states, basis(states))
         print(r)
 
         if print_r_map:
@@ -230,6 +233,53 @@ class Gridworld_687(object):
         self.G2 = (4,4,4,4)
         return {"G1": (self.G1, self.G1_reward),
                 "G2": (self.G2, self.G2_reward)}
+
+    def Set_Aux_Reward(self):
+        reformat_prior = False
+        aux_reward = None
+        if self.aux_r_id == 0:
+            # MANHATTEN
+            h = self.width
+            w = self.width
+            aux_reward = torch.zeros((h, w, self.action_space.n))
+            
+            goal_x = 4
+            goal_y = 4
+            for y in range(h):
+                for x in range(w):
+                    for action in range(self.action_space.n):
+                        new_x = x
+                        new_y = y
+                        if action == 0:  # move up
+                            new_y = y - 1
+                        elif action == 1:  # move right
+                            new_x = x + 1
+                        elif action == 2:  # move down
+                            new_y = y + 1
+                        elif action == 3:  # move left
+                            new_x = x - 1
+                        
+                        aux_reward[y, x, action] = - (np.abs(new_x - goal_x) + np.abs(new_y - goal_y)) / 8 + (0.125 * 2)
+        elif self.aux_r_id == 1:
+            h = self.width
+            w = self.width
+            aux_reward = torch.zeros((h, w, self.action_space.n))
+            aux_reward[1,1,:] = 1
+            aux_reward[0,2,:] = 1
+
+        # print(aux_reward)
+
+        if aux_reward is not None:
+            self.aux_reward = aux_reward
+
+    # TODO: assumes categorical
+    def Get_Aux_Reward(self, states):
+        return self.aux_reward[states[:,1], states[:,0]]
+            
+        # states = states[action_indexes[:,0]]
+        # # print(states.shape, action_indexes.shape)
+        # aux_rewards = self.aux_reward[states[:,0], states[:,1], action_indexes[:,1]]
+        # return aux_rewards
 
     # returns the list of obstacles
     def get_static_obstacles(self):
