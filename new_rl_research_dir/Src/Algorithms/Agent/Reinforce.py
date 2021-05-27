@@ -13,6 +13,7 @@ class Reinforce(Agent):
     
     def init(self, config):
         super(Reinforce, self).init(config)
+        self.dropped_gamma = self.config.dropped_gamma
         self.policy.init(config)
 
         # TODO: These are hardcodes - also not sure if I need the Baseline anymore
@@ -32,12 +33,14 @@ class Reinforce(Agent):
 
     # Optimize Agent
     # TODO: TEMP GAMMA
-    def optimize(self, s_features, a, r, gamma=1.0):
+    def optimize(self, s_features, a, r, gamma=0.99):
         if not torch.is_tensor(gamma):
             gamma = torch.full_like(r, gamma)
-        
-        r = r.detach()
-        gamma = gamma.detach()
+
+        # TODO: Wrong gamma dropped
+        # TODO: RN dropped gamma does nothing 
+        # if self.dropped_gamma:
+        #     gamma = torch.full_like(r, 1)
 
         B, H, A = a.shape
 

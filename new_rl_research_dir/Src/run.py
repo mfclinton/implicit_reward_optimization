@@ -32,7 +32,8 @@ class Config:
     method="file",
     buffer_size=10000,
     batch_size=10, #Not Used Parameter
-    weight_decay=0.0):
+    weight_decay=0.0,
+    dropped_gamma=False):
         self.env = env
         # print(env)
         self.basis = basis
@@ -48,6 +49,7 @@ class Config:
         self.buffer_size = buffer_size
         self.batch_size = batch_size
         self.weight_decay = weight_decay #TODO: Check weight decay
+        self.dropped_gamma = dropped_gamma
 
 
 class Solver:
@@ -153,7 +155,7 @@ class Solver:
 
                 s_features, _, in_r, in_g = Process_Sample(sample, basis, agent, reward_func, gamma_func)
 
-                agent.optimize(s_features, a, in_r, in_g) # TODO: Add back r
+                agent.optimize(s_features, a, in_r.detach(), in_g.detach()) # TODO: Add back r
 
                 total_r = r.sum()
                 total_in_r = in_r.sum().detach()
@@ -186,7 +188,7 @@ class Solver:
                 B_value += Calculate_B(phi, d_in_g, in_r[b])
                 A_value += Approximate_A(phi, cumu_in_g, d_in_r)
 
-            # env.heatmap = np.zeros((env.width, env.width)) # TODO REMOVE THIS
+            env.heatmap = np.zeros((env.width, env.width)) # TODO REMOVE THIS
             c_value = 0
             for t3 in range(self.config.T3):
                 total_r, step = self.generate_episode()
@@ -238,10 +240,10 @@ class Solver:
             gamma_func.fc1.weight.grad = d_gamma_func.view(gamma_func.fc1.weight.shape).detach()
 
             reward_func.step(normalize_grad=True)
-            # gamma_func.step()
+            gamma_func.step()
 
             # TODO: REMOVE
-            # env.debug_rewards(reward_func, basis, print_r_map=True)
+            env.debug_rewards(reward_func, basis, print_r_map=True)
 
             if t1 == self.config.T1 - 1:
                 data_mngr.update_returns()
