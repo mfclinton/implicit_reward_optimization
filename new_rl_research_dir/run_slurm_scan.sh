@@ -6,9 +6,9 @@
 #SBATCH --partition=defq    # Partition to submit to
 #
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=1000
-#SBATCH --ntasks-per-node=1
-#SBATCH --time=0-11:59         # Maximum runtime in D-HH:MM
+#SBATCH --cpus-per-task=12
+#SBATCH --ntasks-per-node=12
+#SBATCH --time=0-5:59         # Maximum runtime in D-HH:MM
 #SBATCH --mem-per-cpu=100    # Memory in MB per cpu allocated
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=mfclinton@umass.edu

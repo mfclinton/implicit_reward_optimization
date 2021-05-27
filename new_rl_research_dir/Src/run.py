@@ -223,8 +223,8 @@ class Solver:
                 data_mngr.update_rewards(total_r)
                 
                 total_in_r = in_r.sum().detach()
-                # log.info(f"T1: {t1} | T3: {t3} | Total Reward: {total_r} | Length: {step} | Avg Reward: {total_r / step}")
-                # log.info(f"T1: {t1} | T3: {t3} | Total Internal Reward: {total_in_r} | Length: {step} | Avg Internal Reward: {total_in_r / step}")
+                log.info(f"T1: {t1} | T3: {t3} | Total Reward: {total_r} | Length: {step} | Avg Reward: {total_r / step}")
+                log.info(f"T1: {t1} | T3: {t3} | Total Internal Reward: {total_in_r} | Length: {step} | Avg Internal Reward: {total_in_r / step}")
 
             # Average Results Together
             c_value /= self.config.T3
@@ -272,7 +272,7 @@ def run_thread(nonloaded_config, seed):
     with open("config_params", "w") as f:
         f.write(str(nonloaded_config))
 
-    # log.info("Total time taken: {}".format(time()-t))
+    log.info("Total time taken: {}".format(time()-t))
     return data_mngr.total_avg_r
 
 @hydra.main(config_path=".", config_name="config")
