@@ -20,13 +20,13 @@ config:
   gamma: 0.99
   name: "my_experiment"
   offpolicy: True
-  T1: 1
-  T2: 1
-  T3: 1
+  T1: 10
+  T2: 100
+  T3: 20
   buffer_size: 10000
   batch_size: 250
   weight_decay: 0.0
-  dropped_gamma: False
+  dropped_gamma: False #nothing rn
 seed: 0
 num_runs: 30 #Does nothing rn
 hydra:
