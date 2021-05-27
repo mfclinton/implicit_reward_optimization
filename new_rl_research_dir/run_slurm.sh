@@ -9,7 +9,7 @@
 #SBATCH --cpus-per-task=2
 #SBATCH --ntasks-per-node=12
 #SBATCH --time=0-5:59         # Maximum runtime in D-HH:MM
-#SBATCH --mem-per-cpu=10    # Memory in MB per cpu allocated
+#SBATCH --mem-per-cpu=200    # Memory in MB per cpu allocated
 #SBATCH --mail-type=END
 #SBATCH --mail-user=mfclinton@umass.edu
 #
