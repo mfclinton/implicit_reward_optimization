@@ -12,6 +12,8 @@
 #SBATCH --mem-per-cpu=2000    # Memory in MB per cpu allocated
 #SBATCH --mail-type=END
 #SBATCH --mail-user=mfclinton@umass.edu
+#
+#SBATCH --array=0-30
 
 export MKL_NUM_THREADS=2
 export OPENBLAS_NUM_THREADS=2
