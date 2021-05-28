@@ -111,7 +111,8 @@ class Solver:
             state_tensor = torch.tensor(state, requires_grad=False)
             action, prob, dist = agent.policy.get_action_w_prob_dist(basis.forward(state_tensor.view(1, -1)))
             # TODO: Fix valid actions
-            new_state, reward, valid_actions, done, info = env.step(action=action)
+            for i in range(4):
+                new_state, reward, valid_actions, done, info = env.step(action=action)
             
             self.memory.add(state, action, prob, reward)      
             state = new_state
@@ -214,7 +215,7 @@ class Solver:
             B_value = alpha * B_value + (1-alpha) * new_B_value
             A_value = alpha * A_value + (1-alpha) * new_A_value
 
-            env.heatmap = np.zeros((env.width, env.width)) # TODO REMOVE THIS
+            # env.heatmap = np.zeros((env.width, env.width)) # TODO REMOVE THIS
             c_value = 0
             for t3 in range(self.config.T3):
                 total_r, step = self.generate_episode()
@@ -241,7 +242,7 @@ class Solver:
                 c_value += Calculate_C(phi, cumu_gamma, disc_r).detach()
 
                 data_mngr.update_rewards(total_r)
-                
+                print(B_value, H_value, A_value)
                 total_in_r = in_r.sum().detach()
                 log.info(f"T1: {t1} | T3: {t3} | Total Reward: {total_r} | Length: {step} | Avg Reward: {total_r / step}")
                 log.info(f"T1: {t1} | T3: {t3} | Total Internal Reward: {total_in_r} | Length: {step} | Avg Internal Reward: {total_in_r / step}")
@@ -266,10 +267,11 @@ class Solver:
             gamma_func.step()
 
             # TODO: REMOVE
-            env.debug_rewards(reward_func, basis, print_r_map=True)
+            # env.debug_rewards(reward_func, basis, print_r_map=True)
 
             if t1 == self.config.T1 - 1:
                 data_mngr.update_returns()
+                data_mngr.save_model(reward_func, "Reward_Model")
                 # data_mngr.update_internal_returns()
 
             
