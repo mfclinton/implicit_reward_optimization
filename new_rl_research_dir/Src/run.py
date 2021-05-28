@@ -73,6 +73,8 @@ class Solver:
         
         # Constant Initialization
         env = self.config.env
+        # print(self.config.env)
+        # print(self.config.env.observation_space)
         state_dim = self.config.env.observation_space.shape[0]
         action_dim = self.config.env.action_space.n
 
@@ -108,7 +110,6 @@ class Solver:
         while not done:
             state_tensor = torch.tensor(state, requires_grad=False)
             action, prob, dist = agent.policy.get_action_w_prob_dist(basis.forward(state_tensor.view(1, -1)))
-            
             # TODO: Fix valid actions
             new_state, reward, valid_actions, done, info = env.step(action=action)
             
@@ -173,7 +174,7 @@ class Solver:
 
                 total_r = r.sum()
                 total_in_r = in_r.sum().detach()
-                # log.info(f"T1: {t1} | T2: {t2} | Total Reward: {total_r} | Length: {step} | Avg Reward: {total_r / step}")
+                log.info(f"T1: {t1} | T2: {t2} | Total Reward: {total_r} | Length: {step} | Avg Reward: {total_r / step}")
                 # log.info(f"T1: {t1} | T2: {t2} | Total Internal Reward: {total_in_r} | Length: {step} | Avg Internal Reward: {total_in_r / step}")
                 # data_mngr.update_internal_rewards(total_in_r)
 

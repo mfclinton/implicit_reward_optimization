@@ -46,7 +46,7 @@ class Reinforce(Agent):
 
         # State Values for Baseline
         # state_values = self.baseline(s_feature).view(B, H)
-
+        # print(s_features.shape, a.shape)
         log_pi, dist_all = self.policy.get_logprob_dist(s_features, a.view(B * H, -1))     # (BxH)xd, (BxH)xA
         log_pi = log_pi.view(B, H)                                                       # (BxH)x1 -> BxH
         pi_a = torch.exp(log_pi)
@@ -58,6 +58,7 @@ class Reinforce(Agent):
 
         loss = 0
         # log_pi_return = torch.sum(log_pi * (returns - state_values.detach()), dim=-1, keepdim=True)
+
         log_pi_return = torch.sum(log_pi * returns, dim=-1, keepdim=True)
         loss += - 1.0 * torch.sum(log_pi_return)
         

@@ -11,11 +11,14 @@ from matplotlib.patches import Rectangle, Circle, Arrow
 from matplotlib.ticker import NullLocator
 
 
-class ChrisWorld(gym.Env):
+class ChrisWorld(object):
     def __init__(self):
         # customizable parameters
-        self.num_states = 5
-        self.num_actions = 2
+        self.n_observations = 1
+
+        self.n_actions = 2
+        self.action_space = Discrete(self.n_actions)
+
         self._start_state = 0
         # self._end_states = [3, 6]
         self._end_states = [3, 5]
@@ -25,14 +28,17 @@ class ChrisWorld(gym.Env):
         self.state_transition_matrix = [[1, 1], [2, 4], [3, 3], [4, 4], [5, 5], [6, 6]]
         self.reward_mapping = [[1, -1], [-2, 2], [100, 100], [0, 0], [-100, -100], [0, 0]]
 
-        action_space = Discrete(2)
-        observation_space = Discrete(6)
+        self.action_space = Discrete(2)
+        self.observation_space = torch.ones((self.n_observations,))
+        self.max_steps = 7 #USELESS
+
 
         # set environment state
         self.reset()
 
     def step(self, action: int):
         # print(self._state)
+        action = action.nonzero()[0]
         cur_state = self._state.numpy()[0]
         next_state = self.state_transition_matrix[cur_state][action]
         reward = self.reward_mapping[cur_state][action]

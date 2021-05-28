@@ -20,6 +20,21 @@ class Basis(nn.Module):
         # self.state_high = tensor(env.observation_space.high, dtype=float32, requires_grad=False)
 
 # Designed for Discrete Grids
+class Raw_Basis(Basis):
+    def __init__(self):
+        super(Raw_Basis, self).__init__()
+
+    def init(self, config):
+        env = config.env
+        super(Raw_Basis, self).init(config)
+
+        self.feature_dim = env.n_observations
+
+    def forward(self, state):
+
+        return state
+
+# Designed for Discrete Grids
 class OneHot_Basis(Basis):
     def __init__(self):
         super(OneHot_Basis, self).__init__()
