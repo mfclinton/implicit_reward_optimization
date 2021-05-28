@@ -199,9 +199,9 @@ class Solver:
                 d_in_r = calc_grads(reward_func, in_r[b], True).detach()
                 d_in_g = calc_grads(gamma_func, in_g[b], True).detach()
 
-                new_H_value += Approximate_H(phi, disc_in_r, self.config.weight_decay)
-                new_B_value += Calculate_B(phi, d_in_g, in_r[b])
-                new_A_value += Approximate_A(phi, cumu_in_g, d_in_r)
+                new_H_value += Approximate_H(phi, disc_in_r, self.config.weight_decay).detach()
+                new_B_value += Calculate_B(phi, d_in_g, in_r[b]).detach()
+                new_A_value += Approximate_A(phi, cumu_in_g, d_in_r).detach()
             
             # Average
             new_H_value /= B
@@ -230,14 +230,14 @@ class Solver:
                 in_g = in_g.squeeze() #Not Used
                 mask = mask.squeeze()
 
-                gamma = torch.full((H,), self.config.gamma)
+                gamma = torch.full((H,), self.config.gamma).detach()
                 gamma *= mask
                 cumu_gamma = Get_Cumulative_Gamma(gamma).detach() * mask
 
                 phi = calc_grads(agent.policy, log_pi, True).detach()
 
-                disc_r = Get_Discounted_Returns(r, cumu_gamma, normalize=False)
-                c_value += Calculate_C(phi, cumu_gamma, disc_r)
+                disc_r = Get_Discounted_Returns(r, cumu_gamma, normalize=False).detach()
+                c_value += Calculate_C(phi, cumu_gamma, disc_r).detach()
 
                 data_mngr.update_rewards(total_r)
                 

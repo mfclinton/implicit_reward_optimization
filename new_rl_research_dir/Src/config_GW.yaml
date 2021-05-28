@@ -2,7 +2,7 @@ config:
   _target_: Src.run.Config
   env:
     _target_: Environments.Gridworld_687.Gridworld_687
-    aux_r_id: -1
+    aux_r_id: 1
   basis:
       _target_: Src.Utils.Basis.OneHot_Basis
   agent:
@@ -20,11 +20,11 @@ config:
   gamma: 0.99
   name: "my_experiment"
   offpolicy: True
-  T1: 50
-  T2: 100
-  T3: 20
+  T1: 33
+  T2: 50
+  T3: 33
   buffer_size: 10000
-  batch_size: 1000
+  batch_size: 100
   weight_decay: 0.0
   dropped_gamma: False #nothing rn
 seed: 0
