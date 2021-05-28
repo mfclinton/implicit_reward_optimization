@@ -1,0 +1,71 @@
+config:
+  _target_: Src.run.Config
+  env:
+    _target_: Environments.Gridworld_687.Gridworld_687
+    aux_r_id: -1
+  basis:
+      _target_: Src.Utils.Basis.OneHot_Basis
+  agent:
+    _target_: Src.Algorithms.Agent.Reinforce.Reinforce
+    policy:
+      _target_: Src.Utils.Policy.Categorical
+      lr: 0.01
+      weight_decay: 0.0
+  reward_func:
+    _target_: Src.Algorithms.Reward.RewardFunc.RewardFunc
+    lr: 1.
+  gamma_func:
+    _target_: Src.Algorithms.Gamma.GammaFunc.GammaFunc
+    lr: 0.1
+  gamma: 0.99
+  name: "my_experiment"
+  offpolicy: True
+  T1: 50
+  T2: 100
+  T3: 20
+  buffer_size: 10000
+  batch_size: 1000
+  weight_decay: 0.0
+  dropped_gamma: False #nothing rn
+seed: 0
+num_runs: 1 #Does nothing rn
+defaults:
+  - override hydra/sweeper: nevergrad
+hydra:
+  run:
+    # Output directory for normal runs
+    dir: ./outputs/${config.env._target_}/${config.env.aux_r_id}/${config._target_}/${config.name}/${config.offpolicy}/${num_runs}/${seed}
+  sweeper:
+    optim:
+      optimizer: OnePlusOne
+      budget: 500
+      num_workers: 100
+      maximize: true
+    parametrization:
+      config.agent.policy.lr:
+        init: 0.02
+        step: 2.0
+        log: true
+      config.agent.policy.weight_decay:
+        init: 0.005
+        step: 2.0
+        log: true
+      config.reward_func.lr:
+        init: 0.02
+        step: 2.0
+        log: true
+      config.gamma_func.lr:
+        init: 0.02
+        step: 2.0
+        log: true
+      config.gamma:
+        lower: 0.0
+        upper: 1.0
+      config.batch_size:
+        lower: 50
+        upper: 1000
+        integer: true
+      config.weight_decay:
+        init: 0.005
+        step: 2.0
+        log: true

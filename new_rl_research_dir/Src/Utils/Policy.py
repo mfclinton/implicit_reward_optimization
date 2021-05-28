@@ -64,3 +64,54 @@ class Categorical(Policy):
 
         # TODO: Make assumption about discreteness
         return log_pi, log_dist                                          # BxAx(Bx1) -> B
+
+
+class ChrisPolicy(Policy):
+    def __init__(self, initial_weight=0.5):
+        super(ChrisPolicy, self).__init__()
+        self.w = torch.tensor([initial_weight], requires_grad=True)
+
+    def init(self, config):
+        super(ChrisPolicy, self).init(config)
+        # overrides the action dim variable defined by super-class
+
+    def get_prob(self):
+        return 1 / (1 + torch.exp(- self.w))
+
+    def forward(self, state):
+        p_1 = self.get_prob()
+        p_2 = 1 - self.get_prob()
+        return torch.tensor([p_1, p_2])
+
+    def get_action_w_prob_dist(self, state, explore=0):
+        dist = self.forward(state)
+        probs = dist.cpu().view(-1).data.numpy()
+
+        action = torch.zeros(self.action_dim)
+        action_idx = np.random.choice(self.action_dim, p=probs)
+        action[action_idx] = 1.0
+
+        return action, probs[action_idx], probs
+
+    # def get_prob(self, state, action):
+    #     x = self.forward(state)
+    #     dist = F.softmax(x, -1)
+    #     return dist.gather(1, action), dist
+
+    def get_logprob_dist(self, state, action):
+        action = action.long() #TODO: do better
+
+        x = self.forward(state)                                                              # BxA
+        log_dist = torch.log(x)
+        
+        action_indexes = torch.nonzero(action) #TODO: Assumes Categorical
+        log_pi = torch.zeros(x.size()[:-1])
+        log_pi[action_indexes[:,0]] = log_dist[action_indexes[:,0], action_indexes[:,1]]
+
+        # TODO: Make assumption about discreteness
+        return log_pi, log_dist                                          # BxAx(Bx1) -> B
+
+    def step(self, loss = None, normalize_grad = False):
+        self.w._grad.fill_(0)
+        self.w.backward(loss)
+        1/0
