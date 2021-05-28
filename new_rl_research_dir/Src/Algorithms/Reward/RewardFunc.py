@@ -33,6 +33,7 @@ class RewardFunc(Algorithm):
 
         if self.aux_reward:
             aux_rewards = self.config.env.Get_Aux_Reward(states.long())
+            # print(aux_rewards.shape, x.shape)
             x += aux_rewards
 
         x = torch.clip(x, min, max)
@@ -45,7 +46,7 @@ class RewardFunc(Algorithm):
         in_r[action_indexes[:,0]] = x[action_indexes[:,0], action_indexes[:,1]]
 
         # if self.aux_reward:
-        #     aux_rewards = self.config.env.Get_Aux_Reward(states.long(), action_indexes)
+        #     aux_rewards = self.config.envnc.Get_Aux_Reward(states.long(), action_indexes)
         #     in_r[action_indexes[:,0]] += aux_rewards #TODO: Make sure to mask
 
         return in_r

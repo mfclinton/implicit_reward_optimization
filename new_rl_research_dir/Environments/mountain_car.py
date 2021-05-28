@@ -57,7 +57,7 @@ class MountainCarEnv(gym.Env):
         'video.frames_per_second': 30
     }
 
-    def __init__(self, goal_velocity=0, action_prob=1.0, max_steps=200):
+    def __init__(self, goal_velocity=0, action_prob=1.0, max_steps=800, aux_r_id = -1):
         self.min_position = -1.2
         self.max_position = 0.6
         self.max_speed = 0.07
@@ -68,7 +68,7 @@ class MountainCarEnv(gym.Env):
         self.n_actions = 3
 
         # self.force = 0.001
-        self.force = 0.001
+        self.force = 0.0025
         # self.force = 0.0001
         self.gravity = 0.0025
 
@@ -86,6 +86,7 @@ class MountainCarEnv(gym.Env):
             self.low, self.high, dtype=np.float32
         )
 
+        self.Set_Aux_Reward()
         # self.seed(0) #TODO: fix
 
     def get_valid_actions(self):
@@ -199,3 +200,11 @@ class MountainCarEnv(gym.Env):
         if self.viewer:
             self.viewer.close()
             self.viewer = None
+
+    def Set_Aux_Reward(self):
+        self.aux_reward = True #Temp Placeholder
+
+    def Get_Aux_Reward(self, states):
+        position, velocity = states[:, 0], states[:, 1]
+        self.aux_reward = velocity
+        return self.aux_reward[:, np.newaxis]

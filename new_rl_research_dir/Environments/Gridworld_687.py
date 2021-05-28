@@ -99,14 +99,19 @@ class Gridworld_687(object):
             result += "\n"
         print(result)
 
-    def debug_rewards(self, r_func, basis, print_r_map=True):
+    def debug_rewards(self, r_func, basis, print_r_map=True, is_gamma=False):
         states = []
         for y in range(0,self.width):
             for x in range(0, self.width):
                 states.append([x,y])
         
         states = torch.Tensor(states)
-        r = r_func(states, basis(states))
+
+        if not is_gamma:
+            r = r_func(states, basis(states))
+        else:
+            r = r_func(basis(states))
+
         print(r)
 
         if print_r_map:

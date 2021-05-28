@@ -175,7 +175,7 @@ class Solver:
 
                 total_r = r.sum()
                 total_in_r = in_r.sum().detach()
-                log.info(f"T1: {t1} | T2: {t2} | Total Reward: {total_r} | Length: {step} | Avg Reward: {total_r / step}")
+                # log.info(f"T1: {t1} | T2: {t2} | Total Reward: {total_r} | Avg Reward: {total_r / step}")
                 # log.info(f"T1: {t1} | T2: {t2} | Total Internal Reward: {total_in_r} | Length: {step} | Avg Internal Reward: {total_in_r / step}")
                 # data_mngr.update_internal_rewards(total_in_r)
 
@@ -242,7 +242,7 @@ class Solver:
                 c_value += Calculate_C(phi, cumu_gamma, disc_r).detach()
 
                 data_mngr.update_rewards(total_r)
-                print(B_value, H_value, A_value)
+                # print(B_value, H_value, A_value)
                 total_in_r = in_r.sum().detach()
                 log.info(f"T1: {t1} | T3: {t3} | Total Reward: {total_r} | Length: {step} | Avg Reward: {total_r / step}")
                 log.info(f"T1: {t1} | T3: {t3} | Total Internal Reward: {total_in_r} | Length: {step} | Avg Internal Reward: {total_in_r / step}")
@@ -258,6 +258,7 @@ class Solver:
 
             reward_func.optim.zero_grad()
             gamma_func.optim.zero_grad()
+            
 
             # TODO: Make sure right shape
             reward_func.fc1.weight.grad = d_reward_func.view(reward_func.fc1.weight.shape).detach()
@@ -267,11 +268,13 @@ class Solver:
             gamma_func.step()
 
             # TODO: REMOVE
-            # env.debug_rewards(reward_func, basis, print_r_map=True)
+            # env.debug_rewards(gamma_func, basis, print_r_map=True, is_gamma=True)
 
             if t1 == self.config.T1 - 1:
-                data_mngr.update_returns()
+                # data_mngr.update_returns()
                 data_mngr.save_model(reward_func, "Reward_Model")
+                data_mngr.save_model(gamma_func, "Gamma_Model")
+
                 # data_mngr.update_internal_returns()
 
             

@@ -81,7 +81,7 @@ class ChrisPolicy(Policy):
     def forward(self, state):
         p_1 = self.get_prob()
         p_2 = 1 - self.get_prob()
-        # print(p_1, p_2, self.w)
+        print(p_1, p_2, self.w)
         result = torch.stack(state.shape[0]*[torch.tensor([p_1, p_2])])
 
         return result
