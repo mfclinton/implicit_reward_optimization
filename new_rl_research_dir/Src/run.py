@@ -33,7 +33,8 @@ class Config:
     buffer_size=10000,
     batch_size=10, #Not Used Parameter
     weight_decay=0.0,
-    dropped_gamma=False):
+    dropped_gamma=False,
+    alpha=0.9):
         self.env = env
         # print(env)
         self.basis = basis
@@ -50,7 +51,7 @@ class Config:
         self.batch_size = batch_size
         self.weight_decay = weight_decay #TODO: Check weight decay
         self.dropped_gamma = dropped_gamma
-
+        self.alpha = alpha
 
 class Solver:
     def __init__(self, nonloaded_config):
@@ -128,6 +129,13 @@ class Solver:
         reward_func = self.config.reward_func
         gamma_func = self.config.gamma_func
 
+        alpha = self.config.alpha
+
+        # Do Running Average
+        H_value = 0
+        B_value = 0
+        A_value = 0
+
         # Ensures update in t1 loop
         # assert self.config.offpolicy or self.config.batch_size <= self.config.T2
         
@@ -178,9 +186,10 @@ class Solver:
 
             s_features, log_pi, in_r, in_g = Process_Sample(sample, basis, agent, reward_func, gamma_func)
             
-            H_value = 0
-            B_value = 0
-            A_value = 0
+            new_H_value = 0
+            new_B_value = 0
+            new_A_value = 0
+
             for b in range(B):
                 cumu_in_g = Get_Cumulative_Gamma(in_g[b]).detach() * mask[b]
                 disc_in_r = Get_Discounted_Returns(in_r[b], cumu_in_g, normalize=False).detach()
@@ -190,9 +199,19 @@ class Solver:
                 d_in_r = calc_grads(reward_func, in_r[b], True).detach()
                 d_in_g = calc_grads(gamma_func, in_g[b], True).detach()
 
-                H_value += Approximate_H(phi, disc_in_r, self.config.weight_decay)
-                B_value += Calculate_B(phi, d_in_g, in_r[b])
-                A_value += Approximate_A(phi, cumu_in_g, d_in_r)
+                new_H_value += Approximate_H(phi, disc_in_r, self.config.weight_decay)
+                new_B_value += Calculate_B(phi, d_in_g, in_r[b])
+                new_A_value += Approximate_A(phi, cumu_in_g, d_in_r)
+            
+            # Average
+            new_H_value /= B
+            new_B_value /= B
+            new_A_value /= B
+
+            # Update of H B A
+            H_value = alpha * H_value + (1-alpha) * new_H_value
+            B_value = alpha * B_value + (1-alpha) * new_B_value
+            A_value = alpha * A_value + (1-alpha) * new_A_value
 
             env.heatmap = np.zeros((env.width, env.width)) # TODO REMOVE THIS
             c_value = 0
@@ -228,9 +247,6 @@ class Solver:
 
             # Average Results Together
             c_value /= self.config.T3
-            H_value /= B
-            A_value /= B
-            B_value /= B
 
             nonzero_idx = (H_value == 0).nonzero()
             H_value[nonzero_idx] += 1

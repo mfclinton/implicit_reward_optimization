@@ -27,6 +27,7 @@ config:
   batch_size: 200
   weight_decay: 0.0
   dropped_gamma: False #nothing rn
+  alpha: 0.9
 seed: 0
 num_runs: 1 #Does nothing rn
 defaults:
