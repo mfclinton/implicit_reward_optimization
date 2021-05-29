@@ -9,11 +9,9 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --ntasks-per-node=4
 #SBATCH --time=0-5:59         # Maximum runtime in D-HH:MM
-#SBATCH --mem-per-cpu=200    # Memory in MB per cpu allocated
+#SBATCH --mem-per-cpu=500    # Memory in MB per cpu allocated
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=mfclinton@umass.edu
-#
-#SBATCH --array=0-30
 
 export MKL_NUM_THREADS=2
 export OPENBLAS_NUM_THREADS=2
