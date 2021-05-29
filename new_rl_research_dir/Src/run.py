@@ -271,7 +271,7 @@ class Solver:
             # env.debug_rewards(gamma_func, basis, print_r_map=True, is_gamma=True)
 
             if t1 == self.config.T1 - 1:
-                # data_mngr.update_returns()
+                data_mngr.update_returns()
                 data_mngr.save_model(reward_func, "Reward_Model")
                 data_mngr.save_model(gamma_func, "Gamma_Model")
 

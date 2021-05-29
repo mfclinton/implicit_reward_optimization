@@ -5,7 +5,7 @@
 #SBATCH -e outputs/stdoutput/res_%j.err        # File to which STDERR will be written
 #SBATCH --partition=defq    # Partition to submit to
 #
-#SBATCH --ntasks=1
+#SBATCH --ntasks=30
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks-per-node=2
 #SBATCH --time=0-5:59         # Maximum runtime in D-HH:MM

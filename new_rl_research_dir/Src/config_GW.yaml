@@ -31,6 +31,8 @@ seed: 0
 num_runs: 1 #Does nothing rn
 defaults:
   - override hydra/sweeper: nevergrad
+  - override hydra/launcher: joblib
+
 hydra:
   run:
     # Output directory for normal runs
@@ -69,3 +71,15 @@ hydra:
         init: 0.005
         step: 2.0
         log: true
+  launcher:
+    n_jobs: 100
+    backend: null
+    prefer: processes
+    require: null
+    verbose: 0
+    timeout: null
+    pre_dispatch: 2*n_jobs
+    batch_size: auto
+    temp_folder: null
+    max_nbytes: null
+    mmap_mode: r
