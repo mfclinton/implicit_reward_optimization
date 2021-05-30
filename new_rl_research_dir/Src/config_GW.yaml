@@ -22,7 +22,7 @@ config:
   offpolicy: True
   T1: 15
   T2: 50
-  T3: 20
+  T3: 15
   buffer_size: 10000
   batch_size: 100
   weight_decay: 0.1
