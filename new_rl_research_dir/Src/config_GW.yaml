@@ -63,8 +63,8 @@ hydra:
         lower: 0.0
         upper: 1.0
       config.weight_decay:
-        init: 0.005
-        step: 2.0
+        init: 0.001
+        step: 3.0
         log: true
   launcher:
     # @package hydra.launcher
@@ -74,7 +74,7 @@ hydra:
     # gpus_per_node: null
     # tasks_per_node: 1
     # mem_gb: null
-    nodes: 4
+    nodes: 8
     # name: ${hydra.job.name}
     _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
     # partition: null
