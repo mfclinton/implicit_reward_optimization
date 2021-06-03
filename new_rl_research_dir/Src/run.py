@@ -111,8 +111,9 @@ class Solver:
             state_tensor = torch.tensor(state, requires_grad=False)
             action, prob, dist = agent.policy.get_action_w_prob_dist(basis.forward(state_tensor.view(1, -1)))
             # TODO: Fix valid actions
-            for i in range(4):
-                new_state, reward, valid_actions, done, info = env.step(action=action)
+            # for i in range(4):
+            #     new_state, reward, valid_actions, done, info = env.step(action=action)
+            new_state, reward, valid_actions, done, info = env.step(action=action)
             
             self.memory.add(state, action, prob, reward)      
             state = new_state
@@ -221,6 +222,13 @@ class Solver:
                 total_r, step = self.generate_episode()
                 sample = self.memory._get([self.memory.buffer_pos])
                 _, s, a, _, r, mask = sample
+                if step == 2:
+                    print(s)
+                    print("-----")
+                    print(a)
+                    print("-----")
+                    print(r)
+                    1/0
             
                 B, H, D = s.shape #Note: B = 1
                 _, _, A = a.shape
