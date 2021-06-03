@@ -73,7 +73,7 @@ hydra:
   launcher:
     # @package hydra.launcher
     submitit_folder: $&#123;hydra.sweep.dir/.submitit/%j
-    timeout_min: 60
+    timeout_min: 600
     # cpus_per_task: null
     # gpus_per_node: null
     # tasks_per_node: 1
