@@ -280,8 +280,11 @@ class Solver:
 
             if t1 == self.config.T1 - 1:
                 data_mngr.update_returns()
-                data_mngr.save_model(reward_func, "Reward_Model")
-                data_mngr.save_model(gamma_func, "Gamma_Model")
+                data_mngr.save_model(reward_func, "Reward_Model_1")
+                data_mngr.save_model(gamma_func, "Gamma_Model_1")
+            elif (t1 == 2 * self.config.T1 // 3) or (t1 == self.config.T1 // 3) or (t1 == 0):
+                data_mngr.save_model(reward_func, f"Reward_Model_{t1 / self.config.T1}")
+                data_mngr.save_model(gamma_func, f"Gamma_Model_{t1 / self.config.T1}")
 
                 # data_mngr.update_internal_returns()
 
