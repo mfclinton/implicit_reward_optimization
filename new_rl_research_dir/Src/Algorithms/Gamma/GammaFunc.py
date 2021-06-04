@@ -21,6 +21,7 @@ class GammaFunc(Algorithm):
     # TODO: Only categorical
     def forward(self, state, action=None):
         x = self.fc1(state)
+        x = torch.nn.functional.sigmoid(x)
         # x = torch.clip(x, 0, 1)
         if action is None:
             return x
