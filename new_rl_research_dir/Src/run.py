@@ -145,7 +145,7 @@ class Solver:
         for t1 in range(self.config.T1):
 
             # Checkpoints model
-            save_interval = (self.config.T1 - 1) // 3
+            # save_interval = (self.config.T1 - 1) // 3
             # if save_interval == 0 or t1 % save_interval == 0:
                 # data_mngr.save_reward_and_gamma_func(reward_func, gamma_func, t1)
 
