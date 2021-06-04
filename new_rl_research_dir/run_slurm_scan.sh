@@ -18,6 +18,6 @@ export OPENBLAS_NUM_THREADS=2
 export OMP_NUM_THREADS=32
 
 
-python -m Src.run -cn config_GW -m
+python -m Src.run -cn config -m
 
 sleep 1
