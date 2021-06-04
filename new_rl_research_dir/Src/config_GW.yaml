@@ -9,15 +9,15 @@ config:
     _target_: Src.Algorithms.Agent.Reinforce.Reinforce
     policy:
       _target_: Src.Utils.Policy.Categorical
-      lr: 0.01582232245512644
-      weight_decay: 0.016411224505373263
+      lr: 0.005589762681088797
+      weight_decay: 0.008212283165637765
   reward_func:
     _target_: Src.Algorithms.Reward.RewardFunc.RewardFunc
-    lr: 0.020145975806495523
+    lr: 0.008379392882073615
   gamma_func:
     _target_: Src.Algorithms.Gamma.GammaFunc.GammaFunc
-    lr: 0.024941341112339477
-  gamma: 0.6503508469955804
+    lr: 0.032009062575301006
+  gamma: 0.3878084917739943
   name: "my_experiment"
   offpolicy: True
   T1: 40
@@ -25,7 +25,7 @@ config:
   T3: 25
   buffer_size: 10000
   batch_size: 100
-  weight_decay: 0.0006323627273727256
+  weight_decay: 0.0008678979284047942
   dropped_gamma: False #nothing rn
 seed: 0
 num_runs: 1 #Does nothing rn

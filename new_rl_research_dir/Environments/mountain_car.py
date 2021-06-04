@@ -57,7 +57,7 @@ class MountainCarEnv(gym.Env):
         'video.frames_per_second': 30
     }
 
-    def __init__(self, goal_velocity=0, action_prob=1.0, max_steps=50000, aux_r_id = -1):
+    def __init__(self, goal_velocity=0, action_prob=1.0, max_steps=20000, aux_r_id = -1):
         self.min_position = -1.2
         self.max_position = 0.6
         self.max_speed = 0.07
