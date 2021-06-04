@@ -34,7 +34,8 @@ class Config:
     batch_size=10, #Not Used Parameter
     weight_decay=0.0,
     dropped_gamma=False,
-    alpha=0.9):
+    alpha=0.9,
+    num_repeat_action=1):
         self.env = env
         # print(env)
         self.basis = basis
@@ -52,6 +53,7 @@ class Config:
         self.weight_decay = weight_decay #TODO: Check weight decay
         self.dropped_gamma = dropped_gamma
         self.alpha = alpha
+        self.num_repeat_action = num_repeat_action
 
 class Solver:
     def __init__(self, nonloaded_config):
@@ -113,9 +115,9 @@ class Solver:
             action, prob, dist = agent.policy.get_action_w_prob_dist(basis.forward(state_tensor.view(1, -1)))
             # print("WOW")
             # TODO: Fix valid actions
-            # for i in range(4):
-            #     new_state, reward, valid_actions, done, info = env.step(action=action)
-            new_state, reward, valid_actions, done, info = env.step(action=action)
+            for i in range(self.config.num_repeat_action):
+                new_state, reward, valid_actions, done, info = env.step(action=action)
+            # new_state, reward, valid_actions, done, info = env.step(action=action)
             
             self.memory.add(state, action, prob, reward)      
             state = new_state
