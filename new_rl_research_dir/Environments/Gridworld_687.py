@@ -125,6 +125,19 @@ class Gridworld_687(object):
             print("Total Visits")
             print(self.heatmap)
 
+    def debug_gamma(self, g_func, basis):
+        states = []
+        for y in range(0,self.width):
+            for x in range(0, self.width):
+                states.append([x,y])
+        
+        states = torch.Tensor(states)
+
+        g = g_func(basis(states))
+        avg_g = g.mean(dim=1)
+        return avg_g
+
+
 
     # reward values associated with states
     def set_rewards(self):
