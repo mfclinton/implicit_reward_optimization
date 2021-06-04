@@ -109,7 +109,9 @@ class Solver:
         done = False
         while not done:
             state_tensor = torch.tensor(state, requires_grad=False)
+            # print(basis.forward(state_tensor.view(1, -1)))
             action, prob, dist = agent.policy.get_action_w_prob_dist(basis.forward(state_tensor.view(1, -1)))
+            # print("WOW")
             # TODO: Fix valid actions
             # for i in range(4):
             #     new_state, reward, valid_actions, done, info = env.step(action=action)
@@ -154,7 +156,6 @@ class Solver:
                 self.memory.reset()
 
             for t2 in range(self.config.T2):
-                
                 # Get Trajectory
                 # TODO: Check it's okay to generate an initial episode
                 if not self.config.offpolicy or self.memory.episode_ctr < self.config.T3:
@@ -162,7 +163,7 @@ class Solver:
                     sample = self.memory._get([self.memory.buffer_pos])
                     # data_mngr.update_rewards(total_r)
                 else:
-                    sample = self.memory.sample(1) 
+                    sample = self.memory.sample(1)
 
                 # Optimize Agent
                 # batch_size = self.memory.size if self.memory.size < self.config.batch_size else self.config.batch_size
@@ -222,14 +223,7 @@ class Solver:
                 total_r, step = self.generate_episode()
                 sample = self.memory._get([self.memory.buffer_pos])
                 _, s, a, _, r, mask = sample
-                if step == 2:
-                    print(s)
-                    print("-----")
-                    print(a)
-                    print("-----")
-                    print(r)
-                    1/0
-            
+
                 B, H, D = s.shape #Note: B = 1
                 _, _, A = a.shape
 
@@ -306,7 +300,7 @@ def run_thread(nonloaded_config, seed):
         f.write(str(nonloaded_config))
 
     log.info("Total time taken: {}".format(time()-t))
-    return data_mngr.total_avg_r
+    return data_mngr.total_r
 
 @hydra.main(config_path=".", config_name="config")
 # @hydra.main(config_path=".", config_name="config_GW")

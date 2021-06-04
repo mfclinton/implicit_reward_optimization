@@ -1,12 +1,10 @@
 config:
   _target_: Src.run.Config
   env:
-    _target_: Environments.mountain_car.MountainCarEnv
-    aux_r_id: -1
+    _target_: Environments.Gridworld_687.Gridworld_687
+    aux_r_id: 1
   basis:
-      _target_: Src.Utils.Basis.Fourier_Basis
-      fourier_order: 3
-      fourier_coupled: True
+      _target_: Src.Utils.Basis.OneHot_Basis
   agent:
     _target_: Src.Algorithms.Agent.Reinforce.Reinforce
     policy:
@@ -72,6 +70,23 @@ hydra:
     # @package hydra.launcher
     submitit_folder: $&#123;hydra.sweep.dir/.submitit/%j
     timeout_min: 600
+    # cpus_per_task: null
+    # gpus_per_node: null
+    # tasks_per_node: 1
+    # mem_gb: null
     nodes: 4
+    # name: ${hydra.job.name}
     _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
+    # partition: null
+    # comment: null
+    # constraint: null
+    # exclude: null
+    # cpus_per_gpu: null
+    # gpus_per_task: null
+    # mem_per_gpu: null
+    # mem_per_cpu: null
+    # signal_delay_s: 120
+    # max_num_timeout: 0
+    # additional_parameters: {}
     array_parallelism: 256
+    # setup: null

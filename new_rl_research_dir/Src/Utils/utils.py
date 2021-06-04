@@ -98,7 +98,7 @@ class DataManager:
         self.result_path = os.getcwd()
         self.save_idx = -1
         self.save_just_data = save_just_data
-        self.total_avg_r = 0
+        self.total_r = 0
         self.reset()
 
     def reset(self):
@@ -114,7 +114,7 @@ class DataManager:
     #     self.internal_rewards.append(internal_reward)
 
     def update_returns(self):
-        self.total_avg_r += float(np.array(self.rewards).mean())
+        self.total_r += float(np.array(self.rewards).sum())
         self.returns.append(self.rewards)
         if self.save_just_data:
             self.save()
