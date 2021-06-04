@@ -57,7 +57,7 @@ class MountainCarEnv(gym.Env):
         'video.frames_per_second': 30
     }
 
-    def __init__(self, goal_velocity=0, action_prob=1.0, max_steps=1000, aux_r_id = -1):
+    def __init__(self, goal_velocity=0, action_prob=1.0, max_steps=500, aux_r_id = -1):
         self.min_position = -1.2
         self.max_position = 0.6
         self.max_speed = 0.07
@@ -132,6 +132,7 @@ class MountainCarEnv(gym.Env):
         return np.sin(3 * xs) * .45 + .55
 
     def render(self, mode='human'):
+        1/0
         screen_width = 600
         screen_height = 400
 
