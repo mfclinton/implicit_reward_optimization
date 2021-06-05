@@ -39,7 +39,7 @@ hydra:
   sweeper:
     optim:
       optimizer: OnePlusOne
-      budget: 50
+      budget: 1000
       num_workers: 100
       maximize: true
     parametrization:
