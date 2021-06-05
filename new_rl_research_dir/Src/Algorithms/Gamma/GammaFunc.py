@@ -23,8 +23,10 @@ class GammaFunc(Algorithm):
         x = self.fc1(state)
         x = torch.sigmoid(x)
         # x = torch.clip(x, 0, 1)
+        x = x.mean(dim=1)
         if action is None:
             return x
+        return x
 
         in_g = torch.zeros(state.size()[:-1])
         action_indexes = torch.nonzero(action)
