@@ -4,7 +4,9 @@ config:
     _target_: Environments.mountain_car.MountainCarEnv
     aux_r_id: -1
   basis:
-      _target_: Src.Utils.Basis.Raw_Basis
+      _target_: Src.Utils.Basis.Fourier_Basis
+      fourier_order: 5
+      fourier_coupled: True
   agent:
     _target_: Src.Algorithms.Agent.Reinforce.Reinforce
     policy:
