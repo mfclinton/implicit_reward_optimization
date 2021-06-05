@@ -25,14 +25,14 @@ class Raw_Basis(Basis):
         super(Raw_Basis, self).__init__()
 
     def init(self, config):
-        env = config.env
         super(Raw_Basis, self).init(config)
+        env = config.env
 
         self.feature_dim = env.n_observations
 
     def forward(self, state):
 
-        return state
+        return state.float()
 
 # Designed for Discrete Grids
 class OneHot_Basis(Basis):

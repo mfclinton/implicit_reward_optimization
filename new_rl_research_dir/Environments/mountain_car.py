@@ -66,6 +66,7 @@ class MountainCarEnv(gym.Env):
         self.action_prob = action_prob
         self.max_steps = max_steps #TODO: Does Nothing
         self.n_actions = 3
+        self.n_observations = 2
 
         self.force = 0.001
         # self.force = 0.002
@@ -73,17 +74,17 @@ class MountainCarEnv(gym.Env):
         self.gravity = 0.0025
 
         self.low = np.array(
-            [self.min_position, -self.max_speed], dtype=np.float32
+            [self.min_position, -self.max_speed], dtype=np.float64
         )
         self.high = np.array(
-            [self.max_position, self.max_speed], dtype=np.float32
+            [self.max_position, self.max_speed], dtype=np.float64
         )
 
         self.viewer = None
 
         self.action_space = spaces.Discrete(self.n_actions)
         self.observation_space = spaces.Box(
-            self.low, self.high, dtype=np.float32
+            self.low, self.high, dtype=np.float64
         )
 
         self.Set_Aux_Reward()
